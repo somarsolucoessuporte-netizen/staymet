@@ -85,6 +85,14 @@ export default async function GestorDashboardPage({
 }: {
   params: Promise<{ locale: string }>
 }) {
+  try {
+    const test = await prisma.$queryRaw`SELECT 1 as test`
+    console.log('[DB-TEST] Conexão OK:', test)
+  } catch (err: any) {
+    console.error('[DB-TEST] FALHA NA CONEXÃO:', err.message)
+    console.error('[DB-TEST] Stack:', err.stack)
+    throw new Error('DB_CONNECTION_FAILED: ' + err.message)
+  }
   const { locale } = await params
   const data = await getDashboardData()
 
