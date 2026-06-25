@@ -1,14 +1,43 @@
 import { prisma } from '@/lib/prisma'
-import { PageHeader } from '@/components/shared/PageHeader'
-import { TaskCard } from '@/components/shared/TaskCard'
-import { EmptyState } from '@/components/shared/EmptyState'
-import { Card, CardContent } from '@/components/ui/card'
-import { CheckSquare } from 'lucide-react'
+import { CheckSquare, ClipboardList, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
-const statusGroups = [
-  { key: 'PENDENTE', label: 'Pendente', color: 'text-warning' },
-  { key: 'EM_ANDAMENTO', label: 'Em Andamento', color: 'text-blue-600' },
-  { key: 'CONCLUIDA', label: 'Concluída', color: 'text-success' },
+const typeLabels: Record<string, string> = {
+  LIMPEZA: 'Limpeza',
+  MANUTENCAO: 'Manutenção',
+  VISTORIA_ENTRADA: 'Vistoria Entrada',
+  VISTORIA_SAIDA: 'Vistoria Saída',
+  OUTRO: 'Outro',
+}
+
+const columns = [
+  {
+    key: 'PENDENTE',
+    label: 'Pendente',
+    icon: AlertCircle,
+    iconColor: 'text-amber-500',
+    iconBg: 'bg-amber-50',
+    dot: 'bg-amber-400',
+    badge: 'bg-amber-100 text-amber-700',
+  },
+  {
+    key: 'EM_ANDAMENTO',
+    label: 'Em andamento',
+    icon: ClipboardList,
+    iconColor: 'text-blue-600',
+    iconBg: 'bg-blue-50',
+    dot: 'bg-blue-500',
+    badge: 'bg-blue-100 text-blue-700',
+  },
+  {
+    key: 'CONCLUIDA',
+    label: 'Concluída',
+    icon: CheckCircle2,
+    iconColor: 'text-emerald-600',
+    iconBg: 'bg-emerald-50',
+    dot: 'bg-emerald-500',
+    badge: 'bg-emerald-100 text-emerald-700',
+  },
 ]
 
 export default async function GestorTarefasPage({
@@ -16,7 +45,7 @@ export default async function GestorTarefasPage({
 }: {
   params: Promise<{ locale: string }>
 }) {
-  const { locale } = await params
+  await params
 
   const tasks = await prisma.task.findMany({
     where: { status: { not: 'CANCELADA' } },
@@ -27,58 +56,142 @@ export default async function GestorTarefasPage({
     orderBy: { scheduledFor: 'asc' },
   })
 
-  const grouped = statusGroups.map((group) => ({
-    ...group,
-    tasks: tasks.filter((t) => t.status === group.key),
+  const grouped = columns.map((col) => ({
+    ...col,
+    tasks: tasks.filter((t) => t.status === col.key),
   }))
 
   return (
-    <div className="p-4 pt-6">
-      <PageHeader
-        title="Tarefas"
-        description={`${tasks.length} tarefas no total`}
-      />
+    <div className="p-5 lg:p-8 pb-24 lg:pb-8">
+
+      {/* Cabeçalho */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+          Tarefas
+        </h1>
+        <p className="text-sm text-gray-500 mt-0.5">{tasks.length} tarefa{tasks.length !== 1 ? 's' : ''} no total</p>
+      </div>
 
       {tasks.length === 0 ? (
-        <EmptyState icon={CheckSquare} title="Sem tarefas" description="Nenhuma tarefa cadastrada." />
-      ) : (
-        <div className="space-y-6">
-          {grouped.map((group) => (
-            <div key={group.key}>
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`h-2 w-2 rounded-full ${
-                  group.key === 'PENDENTE' ? 'bg-warning' :
-                  group.key === 'EM_ANDAMENTO' ? 'bg-blue-600' : 'bg-success'
-                }`} />
-                <h2 className={`font-semibold text-sm ${group.color}`}>
-                  {group.label} ({group.tasks.length})
-                </h2>
-              </div>
-              {group.tasks.length === 0 ? (
-                <Card>
-                  <CardContent className="py-4 text-center text-sm text-muted-foreground">
-                    Nenhuma tarefa
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-2">
-                  {group.tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      title={task.title}
-                      type={task.type}
-                      status={task.status}
-                      propertyName={task.property.name}
-                      assigneeName={task.assignee?.name}
-                      scheduledFor={task.scheduledFor}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+          <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckSquare size={24} className="text-emerald-500" />
+          </div>
+          <p className="font-semibold text-gray-800">Nenhuma tarefa</p>
+          <p className="text-sm text-gray-400 mt-1">Nenhuma tarefa cadastrada no momento.</p>
         </div>
+      ) : (
+        <>
+          {/* Mobile: lista por seção */}
+          <div className="lg:hidden space-y-6">
+            {grouped.map((col) => {
+              const ColIcon = col.icon
+              return (
+                <section key={col.key}>
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className={`w-7 h-7 ${col.iconBg} rounded-lg flex items-center justify-center`}>
+                      <ColIcon size={14} className={col.iconColor} />
+                    </div>
+                    <h2 className="text-sm font-semibold text-gray-700">{col.label}</h2>
+                    <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${col.badge}`}>
+                      {col.tasks.length}
+                    </span>
+                  </div>
+                  {col.tasks.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-gray-100 py-5 text-center">
+                      <p className="text-sm text-gray-400">Nenhuma tarefa</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {col.tasks.map((task) => (
+                        <KanbanCard key={task.id} task={task} badge={col.badge} dot={col.dot} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              )
+            })}
+          </div>
+
+          {/* Desktop: 3 colunas */}
+          <div className="hidden lg:grid grid-cols-3 gap-4">
+            {grouped.map((col) => {
+              const ColIcon = col.icon
+              return (
+                <div key={col.key} className="flex flex-col gap-3">
+                  {/* Coluna header */}
+                  <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl ${col.iconBg} border border-current/10`}
+                    style={{ borderColor: 'transparent' }}>
+                    <div className={`w-7 h-7 bg-white/60 rounded-lg flex items-center justify-center`}>
+                      <ColIcon size={14} className={col.iconColor} />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">{col.label}</span>
+                    <span className={`ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>
+                      {col.tasks.length}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  {col.tasks.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
+                      <p className="text-sm text-gray-400">Vazio</p>
+                    </div>
+                  ) : (
+                    col.tasks.map((task) => (
+                      <KanbanCard key={task.id} task={task} badge={col.badge} dot={col.dot} />
+                    ))
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
+    </div>
+  )
+}
+
+function KanbanCard({
+  task,
+  badge,
+  dot,
+}: {
+  task: {
+    id: string
+    title: string
+    description: string | null
+    type: string
+    status: string
+    scheduledFor: Date | null
+    property: { name: string }
+    assignee: { name: string } | null
+  }
+  badge: string
+  dot: string
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] text-gray-400 font-medium mb-0.5">
+            {typeLabels[task.type] ?? task.type}
+          </p>
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{task.title}</p>
+        </div>
+        <span className={`flex items-center gap-1 flex-shrink-0 mt-0.5`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+        </span>
+      </div>
+
+      {task.description && (
+        <p className="text-xs text-gray-500 leading-relaxed mb-2 line-clamp-2">{task.description}</p>
+      )}
+
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-400">
+        <span className="font-medium text-gray-600">{task.property.name}</span>
+        {task.assignee && <span>· {task.assignee.name}</span>}
+        {task.scheduledFor && <span>· {formatDate(task.scheduledFor)}</span>}
+      </div>
     </div>
   )
 }

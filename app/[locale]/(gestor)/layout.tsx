@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { AppShell } from '@/components/shared/AppShell'
+import { GestorSidebar } from '@/components/layouts/GestorSidebar'
 import { ToastContextProvider } from '@/components/ui/toast'
 
 export default async function GestorLayout({
@@ -29,9 +29,12 @@ export default async function GestorLayout({
 
   return (
     <ToastContextProvider>
-      <AppShell role="gestor" locale={locale}>
+      <GestorSidebar
+        locale={locale}
+        user={{ name: dbUser.name, email: dbUser.email }}
+      >
         {children}
-      </AppShell>
+      </GestorSidebar>
     </ToastContextProvider>
   )
 }
