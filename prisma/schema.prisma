@@ -1,0 +1,279 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  PROPRIETARIO
+  GESTOR
+  ANFITRIAO
+  HOSPEDE
+  PRESTADOR
+}
+
+enum PropertyType {
+  CASA_PRAIA
+  APARTAMENTO
+  CHACARA
+  CASA_SERRA
+  OUTRO
+}
+
+enum ReservationStatus {
+  CONFIRMADA
+  EM_ANDAMENTO
+  ENCERRADA
+  CANCELADA
+}
+
+enum TaskStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+enum TaskType {
+  LIMPEZA
+  MANUTENCAO
+  VISTORIA_ENTRADA
+  VISTORIA_SAIDA
+  OUTRO
+}
+
+enum OccurrenceStatus {
+  ABERTA
+  EM_ANDAMENTO
+  RESOLVIDA
+}
+
+enum OccurrencePriority {
+  BAIXA
+  MEDIA
+  ALTA
+  URGENTE
+}
+
+model User {
+  id         String   @id @default(cuid())
+  supabaseId String   @unique
+  name       String
+  email      String   @unique
+  phone      String?
+  avatarUrl  String?
+  role       Role
+  language   String   @default("pt-BR")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  ownedProperties   Property[]     @relation("PropertyOwner")
+  managedProperties PropertyUser[]
+  tasks             Task[]         @relation("TaskAssignee")
+  createdTasks      Task[]         @relation("TaskCreator")
+  requests          GuestRequest[]
+  occurrences       Occurrence[]
+  notifications     Notification[]
+  checkIns          Reservation[]  @relation("CheckedInBy")
+  checkOuts         Reservation[]  @relation("CheckedOutBy")
+}
+
+model Property {
+  id            String       @id @default(cuid())
+  name          String
+  description   String?
+  type          PropertyType
+  address       String
+  city          String
+  state         String
+  zipCode       String?
+  country       String       @default("Brasil")
+  coverImageUrl String?
+  wifiName      String?
+  wifiPassword  String?
+  checkInTime   String       @default("14:00")
+  checkOutTime  String       @default("11:00")
+  maxGuests     Int          @default(4)
+  rules         String?
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  ownerId      String
+  owner        User              @relation("PropertyOwner", fields: [ownerId], references: [id])
+  users        PropertyUser[]
+  reservations Reservation[]
+  tasks        Task[]
+  occurrences  Occurrence[]
+  inventory    InventoryItem[]
+  partners     PropertyPartner[]
+  inspections  Inspection[]
+}
+
+model PropertyUser {
+  id        String   @id @default(cuid())
+  role      Role
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([propertyId, userId])
+}
+
+model Reservation {
+  id             String            @id @default(cuid())
+  guestName      String
+  guestEmail     String?
+  guestPhone     String?
+  guestCount     Int               @default(1)
+  checkIn        DateTime
+  checkOut       DateTime
+  status         ReservationStatus @default(CONFIRMADA)
+  totalAmount    Decimal?          @db.Decimal(10, 2)
+  platform       String?
+  platformCode   String?
+  notes          String?
+  accessCode     String?           @unique @default(cuid())
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  propertyId     String
+  property       Property     @relation(fields: [propertyId], references: [id])
+  checkedInById  String?
+  checkedInBy    User?        @relation("CheckedInBy", fields: [checkedInById], references: [id])
+  checkedOutById String?
+  checkedOutBy   User?        @relation("CheckedOutBy", fields: [checkedOutById], references: [id])
+
+  tasks       Task[]
+  requests    GuestRequest[]
+  inspections Inspection[]
+}
+
+model Task {
+  id           String     @id @default(cuid())
+  title        String
+  description  String?
+  type         TaskType
+  status       TaskStatus @default(PENDENTE)
+  scheduledFor DateTime?
+  completedAt  DateTime?
+  photos       String[]
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  propertyId    String
+  property      Property     @relation(fields: [propertyId], references: [id])
+  reservationId String?
+  reservation   Reservation? @relation(fields: [reservationId], references: [id])
+  assigneeId    String?
+  assignee      User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creatorId     String
+  creator       User         @relation("TaskCreator", fields: [creatorId], references: [id])
+}
+
+model Occurrence {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  status      OccurrenceStatus   @default(ABERTA)
+  priority    OccurrencePriority @default(MEDIA)
+  photos      String[]
+  resolution  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  reportedById String
+  reportedBy   User     @relation(fields: [reportedById], references: [id])
+}
+
+model Inspection {
+  id            String   @id @default(cuid())
+  type          String
+  notes         String?
+  photos        String[]
+  checklist     Json
+  signedByGuest Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  propertyId    String
+  property      Property    @relation(fields: [propertyId], references: [id])
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+}
+
+model InventoryItem {
+  id         String   @id @default(cuid())
+  name       String
+  quantity   Int      @default(1)
+  condition  String   @default("BOM")
+  photoUrl   String?
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+}
+
+model GuestRequest {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  status    String   @default("PENDENTE")
+  response  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservationId String
+  reservation   Reservation @relation(fields: [reservationId], references: [id])
+  guestId       String?
+  guest         User?       @relation(fields: [guestId], references: [id])
+}
+
+model Partner {
+  id          String   @id @default(cuid())
+  name        String
+  category    String
+  phone       String?
+  email       String?
+  description String?
+  logoUrl     String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  properties PropertyPartner[]
+}
+
+model PropertyPartner {
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  partnerId  String
+  partner    Partner  @relation(fields: [partnerId], references: [id])
+
+  @@id([propertyId, partnerId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  type      String
+  link      String?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
