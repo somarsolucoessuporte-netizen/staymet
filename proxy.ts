@@ -14,24 +14,8 @@ function isPublicPath(pathname: string): boolean {
   )
 }
 
-function getLocaleFromPath(pathname: string): string {
-  const parts = pathname.split('/')
-  if (parts.length > 1 && routing.locales.includes(parts[1] as 'pt-BR' | 'en')) {
-    return parts[1]
-  }
-  return routing.defaultLocale
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
-
-  // Se o pathname não começa com um locale válido, redireciona para /pt-BR
-  const locale = getLocaleFromPath(pathname)
-  if (!pathname.startsWith(`/${locale}`)) {
-    const url = request.nextUrl.clone()
-    url.pathname = `/${locale}${pathname}`
-    return NextResponse.redirect(url)
-  }
 
   const intlResponse = intlMiddleware(request)
 
@@ -61,6 +45,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user && !isPublicPath(pathname)) {
+    const locale = pathname.startsWith('/en') ? 'en' : 'pt-BR'
     const url = request.nextUrl.clone()
     url.pathname = `/${locale}/login`
     return NextResponse.redirect(url)

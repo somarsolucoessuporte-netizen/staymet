@@ -49,6 +49,7 @@ export function getRoleName(role: string): string {
 
 export function getRoleDashboard(role: string): string {
   const dashboards: Record<string, string> = {
+    ADMINISTRADOR: '/pt-BR/admin/dashboard',
     PROPRIETARIO: '/pt-BR/proprietario/dashboard',
     GESTOR: '/pt-BR/gestor/dashboard',
     ANFITRIAO: '/pt-BR/anfitriao/dashboard',
