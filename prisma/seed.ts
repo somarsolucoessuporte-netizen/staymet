@@ -44,7 +44,8 @@ async function main() {
   await clearAll()
 
   // Create Supabase users
-  const [gestorSb, proprietarioSb, anfitriaoSb, hospedeSb, prestadorSb] = await Promise.all([
+  const [adminSb, gestorSb, proprietarioSb, anfitriaoSb, hospedeSb, prestadorSb] = await Promise.all([
+    createSupabaseUser('admin@staymet.app', '123456', 'Francisco Admin', 'ADMINISTRADOR'),
     createSupabaseUser('gestor@staymet.app', '123456', 'Carlos Gestor', 'GESTOR'),
     createSupabaseUser('proprietario@staymet.app', '123456', 'Maria Proprietária', 'PROPRIETARIO'),
     createSupabaseUser('anfitriao@staymet.app', '123456', 'João Anfitrião', 'ANFITRIAO'),
@@ -53,7 +54,16 @@ async function main() {
   ])
 
   // Create DB users
-  const [gestor, proprietario, anfitriao, hospede, prestador] = await Promise.all([
+  const [admin, gestor, proprietario, anfitriao, hospede, prestador] = await Promise.all([
+    prisma.user.create({
+      data: {
+        supabaseId: adminSb.id,
+        name: 'Francisco Admin',
+        email: 'admin@staymet.app',
+        role: 'ADMINISTRADOR',
+        phone: '(85) 99999-0000',
+      },
+    }),
     prisma.user.create({
       data: {
         supabaseId: gestorSb.id,
@@ -386,6 +396,7 @@ async function main() {
   console.log('✅ Seed concluído com sucesso!')
   console.log('')
   console.log('👤 Usuários criados:')
+  console.log('   admin@staymet.app / 123456')
   console.log('   gestor@staymet.app / 123456')
   console.log('   proprietario@staymet.app / 123456')
   console.log('   anfitriao@staymet.app / 123456')
