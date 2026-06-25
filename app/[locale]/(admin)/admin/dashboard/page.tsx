@@ -30,14 +30,24 @@ export default function AdminDashboard() {
       try {
         // Fetch user to verify role
         const userRes = await fetch('/api/auth/me')
-        if (!userRes.ok || userRes.status === 401) {
+        if (!userRes.ok) {
           router.push(`/${locale}/login`)
           return
         }
 
         const user = await userRes.json()
-        if (user?.role !== 'ADMINISTRADOR') {
-          router.push(`/${locale}/${user?.role?.toLowerCase()}/dashboard`)
+        if (!user?.role) {
+          router.push(`/${locale}/login`)
+          return
+        }
+
+        if (user.role !== 'ADMINISTRADOR') {
+          const rolePath = user.role.toLowerCase()
+          const redirectPath =
+            user.role === 'HOSPEDE' ? 'boas-vindas' :
+            user.role === 'PRESTADOR' ? 'tarefas' :
+            'dashboard'
+          router.push(`/${locale}/${rolePath}/${redirectPath}`)
           return
         }
 
