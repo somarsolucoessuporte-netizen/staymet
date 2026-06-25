@@ -7,17 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Building2, Users, Calendar, AlertCircle, BarChart3, Settings } from 'lucide-react'
 
-interface DashboardStats {
-  totalClients: number
-  totalProperties: number
-  activeReservationsToday: number
-  pendingInspections: number
-}
-
 export default function AdminDashboard() {
   const router = useRouter()
   const { locale } = useParams<{ locale: string }>()
-  const [stats, setStats] = useState<DashboardStats>({
+  const [stats, setStats] = useState({
     totalClients: 0,
     totalProperties: 0,
     activeReservationsToday: 0,
@@ -26,7 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const checkAuth = async () => {
       try {
         // Fetch user to verify role
         const userRes = await fetch('/api/auth/me')
@@ -52,19 +45,23 @@ export default function AdminDashboard() {
         }
 
         // Fetch stats from API
-        const statsRes = await fetch('/api/admin/stats')
-        if (statsRes.ok) {
-          const data = await statsRes.json()
-          setStats(data)
+        try {
+          const statsRes = await fetch('/api/admin/stats')
+          if (statsRes.ok) {
+            const data = await statsRes.json()
+            setStats(data)
+          }
+        } catch (err) {
+          console.error('Failed to fetch stats:', err)
         }
       } catch (error) {
-        console.error('Failed to fetch stats:', error)
+        console.error('Auth check failed:', error)
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStats()
+    checkAuth()
   }, [locale, router])
 
   const statCards = [
