@@ -4,9 +4,10 @@ import { NextResponse } from 'next/server'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const supabase = await createClient()
     const {
       data: { user },
@@ -28,7 +29,7 @@ export async function PATCH(
     const body = await request.json()
 
     const inspection = await prisma.inspection.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...body,
       },
