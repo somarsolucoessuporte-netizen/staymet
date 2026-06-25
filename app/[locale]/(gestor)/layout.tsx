@@ -13,11 +13,18 @@ export default async function GestorLayout({
 }) {
   const { locale } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
+  if (authError) console.error('[gestor/layout] supabase auth error:', authError)
   if (!user) redirect(`/${locale}/login`)
 
-  const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
+  let dbUser = null
+  try {
+    dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
+  } catch (e) {
+    console.error('[gestor/layout] prisma error:', e)
+    throw e
+  }
   if (!dbUser || dbUser.role !== 'GESTOR') redirect(`/${locale}/login`)
 
   return (

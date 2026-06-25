@@ -15,63 +15,68 @@ import {
 import Link from 'next/link'
 
 async function getDashboardData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
 
-  const today = new Date()
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+    const now = new Date()
+    const today = new Date(now)
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59)
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
 
-  const [
-    properties,
-    activeReservations,
-    pendingTasks,
-    openOccurrences,
-    monthRevenue,
-    todayTasks,
-    notifications,
-  ] = await Promise.all([
-    prisma.property.count({ where: { active: true } }),
-    prisma.reservation.count({ where: { status: { in: ['CONFIRMADA', 'EM_ANDAMENTO'] } } }),
-    prisma.task.count({ where: { status: { in: ['PENDENTE', 'EM_ANDAMENTO'] } } }),
-    prisma.occurrence.count({ where: { status: { in: ['ABERTA', 'EM_ANDAMENTO'] } } }),
-    prisma.reservation.aggregate({
-      where: {
-        checkIn: { gte: startOfMonth, lte: endOfMonth },
-        status: { not: 'CANCELADA' },
-      },
-      _sum: { totalAmount: true },
-    }),
-    prisma.task.findMany({
-      where: {
-        scheduledFor: {
-          gte: new Date(today.setHours(0, 0, 0, 0)),
-          lte: new Date(today.setHours(23, 59, 59, 999)),
+    const [
+      properties,
+      activeReservations,
+      pendingTasks,
+      openOccurrences,
+      monthRevenue,
+      todayTasks,
+      notifications,
+    ] = await Promise.all([
+      prisma.property.count({ where: { active: true } }),
+      prisma.reservation.count({ where: { status: { in: ['CONFIRMADA', 'EM_ANDAMENTO'] } } }),
+      prisma.task.count({ where: { status: { in: ['PENDENTE', 'EM_ANDAMENTO'] } } }),
+      prisma.occurrence.count({ where: { status: { in: ['ABERTA', 'EM_ANDAMENTO'] } } }),
+      prisma.reservation.aggregate({
+        where: {
+          checkIn: { gte: startOfMonth, lte: endOfMonth },
+          status: { not: 'CANCELADA' },
         },
-        status: { not: 'CANCELADA' },
-      },
-      include: {
-        property: { select: { name: true } },
-        assignee: { select: { name: true } },
-      },
-      take: 5,
-    }),
-    prisma.notification.findMany({
-      where: { read: false },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-    }),
-  ])
+        _sum: { totalAmount: true },
+      }),
+      prisma.task.findMany({
+        where: {
+          scheduledFor: { gte: startOfDay, lte: endOfDay },
+          status: { not: 'CANCELADA' },
+        },
+        include: {
+          property: { select: { name: true } },
+          assignee: { select: { name: true } },
+        },
+        take: 5,
+      }),
+      prisma.notification.findMany({
+        where: { read: false },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+      }),
+    ])
 
-  return {
-    properties,
-    activeReservations,
-    pendingTasks,
-    openOccurrences,
-    monthRevenue: monthRevenue._sum.totalAmount ?? 0,
-    todayTasks,
-    notifications,
+    return {
+      properties,
+      activeReservations,
+      pendingTasks,
+      openOccurrences,
+      monthRevenue: Number(monthRevenue._sum.totalAmount ?? 0),
+      todayTasks,
+      notifications,
+    }
+  } catch (e) {
+    console.error('[gestor/dashboard] getDashboardData error:', e)
+    throw e
   }
 }
 
