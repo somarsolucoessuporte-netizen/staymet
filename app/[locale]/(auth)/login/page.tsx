@@ -68,7 +68,7 @@ export default function LoginPage() {
           >
             Staymet
           </span>
-          <p className="text-sm text-muted-foreground mt-2">Gestão gourmet do seu imóvel.</p>
+          <p className="text-sm text-muted-foreground mt-2">Gestão completa. Estadia perfeita.</p>
         </div>
 
         <div
