@@ -25,13 +25,17 @@ export default async function GestorLayout({
     console.error('[gestor/layout] prisma error:', e)
     throw e
   }
-  if (!dbUser || dbUser.role !== 'GESTOR') redirect(`/${locale}/login`)
+
+  // ADMINISTRADOR pode acessar qualquer persona (modo viewAs)
+  if (!dbUser || !['GESTOR', 'ADMINISTRADOR'].includes(dbUser.role)) {
+    redirect(`/${locale}/login`)
+  }
 
   return (
     <ToastContextProvider>
       <GestorSidebar
         locale={locale}
-        user={{ name: dbUser.name, email: dbUser.email }}
+        user={{ name: dbUser!.name, email: dbUser!.email }}
       >
         {children}
       </GestorSidebar>

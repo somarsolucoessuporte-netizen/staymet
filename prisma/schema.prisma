@@ -81,6 +81,7 @@ model User {
   notifications     Notification[]
   checkIns          Reservation[]  @relation("CheckedInBy")
   checkOuts         Reservation[]  @relation("CheckedOutBy")
+  createdMagicLinks MagicLink[]    @relation("MagicLinkCreator")
 }
 
 model Property {
@@ -156,6 +157,7 @@ model Reservation {
   tasks       Task[]
   requests    GuestRequest[]
   inspections Inspection[]
+  magicLinks  MagicLink[]
 }
 
 model Task {
@@ -179,6 +181,7 @@ model Task {
   assignee      User?        @relation("TaskAssignee", fields: [assigneeId], references: [id])
   creatorId     String
   creator       User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  magicLinks    MagicLink[]
 }
 
 model Occurrence {
@@ -264,6 +267,29 @@ model PropertyPartner {
   partner    Partner  @relation(fields: [partnerId], references: [id])
 
   @@id([propertyId, partnerId])
+}
+
+model MagicLink {
+  id             String    @id @default(cuid())
+  token          String    @unique @default(cuid())
+  type           String
+  expiresAt      DateTime
+  usedAt         DateTime?
+  revokedAt      DateTime?
+  active         Boolean   @default(true)
+
+  taskId         String?
+  task           Task?        @relation(fields: [taskId], references: [id])
+  prestadorName  String?
+  prestadorPhone String?
+
+  reservationId  String?
+  reservation    Reservation? @relation(fields: [reservationId], references: [id])
+  guestName      String?
+
+  createdById    String
+  createdBy      User         @relation("MagicLinkCreator", fields: [createdById], references: [id])
+  createdAt      DateTime     @default(now())
 }
 
 model Notification {

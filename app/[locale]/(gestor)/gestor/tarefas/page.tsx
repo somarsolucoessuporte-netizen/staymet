@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { CheckSquare, ClipboardList, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { formatDate } from '@/lib/utils'
+import { TaskLinkButton } from '@/components/gestor/TaskLinkButton'
 
 const typeLabels: Record<string, string> = {
   LIMPEZA: 'Limpeza',
@@ -51,7 +52,7 @@ export default async function GestorTarefasPage({
     where: { status: { not: 'CANCELADA' } },
     include: {
       property: { select: { name: true } },
-      assignee: { select: { name: true } },
+      assignee: { select: { name: true, phone: true } },
     },
     orderBy: { scheduledFor: 'asc' },
   })
@@ -64,7 +65,6 @@ export default async function GestorTarefasPage({
   return (
     <div className="p-5 lg:p-8 pb-24 lg:pb-8">
 
-      {/* Cabeçalho */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           Tarefas
@@ -104,7 +104,7 @@ export default async function GestorTarefasPage({
                   ) : (
                     <div className="space-y-2.5">
                       {col.tasks.map((task) => (
-                        <KanbanCard key={task.id} task={task} badge={col.badge} dot={col.dot} />
+                        <KanbanCard key={task.id} task={task} dot={col.dot} />
                       ))}
                     </div>
                   )}
@@ -119,10 +119,8 @@ export default async function GestorTarefasPage({
               const ColIcon = col.icon
               return (
                 <div key={col.key} className="flex flex-col gap-3">
-                  {/* Coluna header */}
-                  <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl ${col.iconBg} border border-current/10`}
-                    style={{ borderColor: 'transparent' }}>
-                    <div className={`w-7 h-7 bg-white/60 rounded-lg flex items-center justify-center`}>
+                  <div className={`flex items-center gap-2.5 px-4 py-3 rounded-xl ${col.iconBg}`}>
+                    <div className="w-7 h-7 bg-white/60 rounded-lg flex items-center justify-center">
                       <ColIcon size={14} className={col.iconColor} />
                     </div>
                     <span className="text-sm font-semibold text-gray-700">{col.label}</span>
@@ -130,15 +128,13 @@ export default async function GestorTarefasPage({
                       {col.tasks.length}
                     </span>
                   </div>
-
-                  {/* Cards */}
                   {col.tasks.length === 0 ? (
                     <div className="bg-white rounded-2xl border border-dashed border-gray-200 py-8 text-center">
                       <p className="text-sm text-gray-400">Vazio</p>
                     </div>
                   ) : (
                     col.tasks.map((task) => (
-                      <KanbanCard key={task.id} task={task} badge={col.badge} dot={col.dot} />
+                      <KanbanCard key={task.id} task={task} dot={col.dot} />
                     ))
                   )}
                 </div>
@@ -153,7 +149,6 @@ export default async function GestorTarefasPage({
 
 function KanbanCard({
   task,
-  badge,
   dot,
 }: {
   task: {
@@ -164,9 +159,8 @@ function KanbanCard({
     status: string
     scheduledFor: Date | null
     property: { name: string }
-    assignee: { name: string } | null
+    assignee: { name: string; phone: string | null } | null
   }
-  badge: string
   dot: string
 }) {
   return (
@@ -178,20 +172,27 @@ function KanbanCard({
           </p>
           <p className="text-sm font-semibold text-gray-900 leading-tight">{task.title}</p>
         </div>
-        <span className={`flex items-center gap-1 flex-shrink-0 mt-0.5`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
-        </span>
+        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${dot}`} />
       </div>
 
       {task.description && (
         <p className="text-xs text-gray-500 leading-relaxed mb-2 line-clamp-2">{task.description}</p>
       )}
 
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-gray-400">
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-400 mb-2">
         <span className="font-medium text-gray-600">{task.property.name}</span>
         {task.assignee && <span>· {task.assignee.name}</span>}
         {task.scheduledFor && <span>· {formatDate(task.scheduledFor)}</span>}
       </div>
+
+      {/* Botão de link WhatsApp — apenas para tarefas não concluídas */}
+      {task.status !== 'CONCLUIDA' && (
+        <TaskLinkButton
+          taskId={task.id}
+          assigneeName={task.assignee?.name}
+          assigneePhone={task.assignee?.phone}
+        />
+      )}
     </div>
   )
 }

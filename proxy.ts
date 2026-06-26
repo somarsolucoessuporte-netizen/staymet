@@ -17,6 +17,11 @@ function isPublicPath(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Páginas de link mágico: bypass total (sem locale, sem auth)
+  if (pathname.startsWith('/acesso/')) {
+    return NextResponse.next()
+  }
+
   const intlResponse = intlMiddleware(request)
 
   if (isPublicPath(pathname)) {
@@ -49,6 +54,16 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = `/${locale}/login`
     return NextResponse.redirect(url)
+  }
+
+  // Admin com ?viewAs pode acessar qualquer persona sem redirect
+  if (user) {
+    const viewAs = request.nextUrl.searchParams.get('viewAs')
+    if (viewAs) {
+      const response = NextResponse.next()
+      response.headers.set('x-staymet-admin-bypass', '1')
+      return response
+    }
   }
 
   return intlResponse
