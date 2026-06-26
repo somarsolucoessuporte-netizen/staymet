@@ -48,12 +48,11 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
       <aside className="hidden lg:flex flex-col w-60 bg-[#0F172A] flex-shrink-0">
 
         {/* Logo */}
-        <div className="px-5 py-5 border-b border-white/5">
-          <Link href={href('/gestor/dashboard')} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-[#1A56DB] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+        <div className="px-5 py-4 border-b border-white/5">
+          <Link href={href('/gestor/dashboard')}>
+            <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
+              <img src="/logo.jpg" alt="Staymet" className="h-7 w-auto" />
             </div>
-            <span className="text-white font-semibold text-[15px]" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
           </Link>
         </div>
 
@@ -115,11 +114,8 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
           </button>
 
           {/* Logo mobile */}
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="w-7 h-7 bg-[#1A56DB] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
-            <span className="text-gray-900 font-semibold text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+          <div className="lg:hidden">
+            <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto" />
           </div>
 
           {/* Busca desktop */}
@@ -178,11 +174,8 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
           />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#0F172A] flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 bg-[#1A56DB] rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-                </div>
-                <span className="text-white font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+              <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
+                <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto" />
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white p-1">
                 <X size={20} />

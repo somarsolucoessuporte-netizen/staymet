@@ -101,11 +101,10 @@ export default function HospedeMagicPage() {
       {/* Hero gradient */}
       <div style={{ background: 'linear-gradient(160deg, #1A56DB 0%, #0F172A 100%)' }}
         className="px-5 pt-10 pb-8">
-        <div className="flex items-center gap-2 mb-6">
-          <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">S</span>
+        <div className="mb-6">
+          <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
+            <img src="/logo.jpg" alt="Staymet" className="h-7 w-auto" />
           </div>
-          <span className="text-white/70 text-sm font-medium">Staymet</span>
         </div>
 
         <p className="text-blue-200 text-sm mb-1">Bem-vindo,</p>

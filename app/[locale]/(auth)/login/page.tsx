@@ -71,11 +71,10 @@ export default function LoginPage() {
         />
 
         {/* Logo */}
-        <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-base" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+        <div className="relative">
+          <div className="bg-white rounded-xl px-3 py-2 inline-block shadow-lg">
+            <img src="/logo.jpg" alt="Staymet" className="h-8 w-auto" />
           </div>
-          <span className="text-white font-semibold text-lg" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
         </div>
 
         {/* Copy central */}
@@ -119,11 +118,7 @@ export default function LoginPage() {
 
           {/* Logo mobile */}
           <div className="lg:hidden flex flex-col items-center mb-10">
-            <div className="w-12 h-12 bg-[#1A56DB] rounded-2xl flex items-center justify-center shadow-lg mb-3">
-              <span className="text-white font-bold text-xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
-            <span className="text-[#0F172A] font-bold text-xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
-            <p className="text-gray-500 text-sm mt-1">Gestão completa. Estadia perfeita.</p>
+            <img src="/logo.jpg" alt="Staymet" className="h-20 w-auto" />
           </div>
 
           {/* Heading */}

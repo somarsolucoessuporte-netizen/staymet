@@ -69,9 +69,7 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
+            <img src="/logo.jpg" alt="Staymet" className="h-8 w-auto" />
             <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Admin</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
