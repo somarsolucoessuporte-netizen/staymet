@@ -71,10 +71,11 @@ export default function LoginPage() {
         />
 
         {/* Logo */}
-        <div className="relative">
-          <div className="bg-white rounded-xl px-3 py-2 inline-block shadow-lg">
-            <img src="/logo.jpg" alt="Staymet" className="h-8 w-auto" />
+        <div className="relative flex items-center gap-3">
+          <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center shadow-lg shadow-[#1A56DB]/30">
+            <span className="text-white font-bold text-base" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
           </div>
+          <span className="text-white font-semibold text-lg" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
         </div>
 
         {/* Copy central */}
@@ -117,8 +118,11 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
 
           {/* Logo mobile */}
-          <div className="lg:hidden flex flex-col items-center mb-10">
-            <img src="/logo.jpg" alt="Staymet" className="h-20 w-auto" />
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-[#1A56DB] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1A56DB]/30">
+              <span className="text-white font-bold text-xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+            </div>
+            <span className="text-gray-900 font-bold text-2xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
           </div>
 
           {/* Heading */}

@@ -8,9 +8,12 @@ export function HospedeHeader({ title, subtitle, transparent = false }: HospedeH
   return (
     <div className={`px-5 pt-14 pb-5 ${transparent ? 'absolute top-0 left-0 right-0 z-10' : 'bg-white border-b border-gray-50'}`}>
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="bg-white rounded px-1.5 py-0.5 shadow-sm inline-block">
-          <img src="/logo.jpg" alt="Staymet" className="h-4 w-auto" />
+        <div className={`w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center`}>
+          <span className="text-white font-bold text-[9px]" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
         </div>
+        <span className={`text-xs font-semibold tracking-wide ${transparent ? 'text-white/70' : 'text-gray-400'}`}>
+          STAYMET
+        </span>
       </div>
       <h1
         className={`text-xl font-bold ${transparent ? 'text-white' : 'text-gray-900'}`}

@@ -18,7 +18,7 @@ export default async function AnfitriaoLayout({
   if (!user) redirect(`/${locale}/login`)
 
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
-  if (!dbUser || dbUser.role !== 'ANFITRIAO') redirect(`/${locale}/login`)
+  if (!dbUser || !['ANFITRIAO', 'GESTOR', 'ADMINISTRADOR'].includes(dbUser.role)) redirect(`/${locale}/login`)
 
   return (
     <ToastContextProvider>

@@ -9,8 +9,7 @@ function isPublicPath(pathname: string): boolean {
   return (
     pathname.includes('/login') ||
     pathname.includes('/register') ||
-    pathname.includes('/auth/') ||
-    pathname.includes('/hospede/')
+    pathname.includes('/auth/')
   )
 }
 

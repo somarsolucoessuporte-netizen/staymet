@@ -95,10 +95,11 @@ export default function HospedePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
 
           {/* Logo no topo */}
-          <div className="absolute top-12 left-5">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl px-2.5 py-1.5 inline-block shadow-sm">
-              <img src="/logo.jpg" alt="Staymet" className="h-5 w-auto" />
+          <div className="absolute top-12 left-5 flex items-center gap-2">
+            <div className="w-7 h-7 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
+              <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
             </div>
+            <span className="text-white/90 text-sm font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
           </div>
 
           {/* Saudação */}
@@ -263,7 +264,12 @@ export default function HospedePage() {
 
         {/* FOOTER */}
         <div className="px-4 mt-8 text-center">
-          <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto mx-auto mb-1" />
+          <div className="flex items-center justify-center gap-1.5">
+            <div className="w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center">
+              <span className="text-white font-bold text-[9px]">S</span>
+            </div>
+            <span className="text-gray-400 text-xs font-semibold">Staymet</span>
+          </div>
           <p className="text-gray-200 text-[10px] mt-0.5">Powered by Somar Soluções Digitais</p>
         </div>
 

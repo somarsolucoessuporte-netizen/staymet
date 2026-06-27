@@ -82,6 +82,7 @@ model User {
   checkIns          Reservation[]  @relation("CheckedInBy")
   checkOuts         Reservation[]  @relation("CheckedOutBy")
   createdMagicLinks MagicLink[]    @relation("MagicLinkCreator")
+  createdExpenses   Expense[]      @relation("ExpenseCreator")
 }
 
 model Property {
@@ -105,6 +106,14 @@ model Property {
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  // MODELO FINANCEIRO
+  financeModel      String   @default("HIBRIDO")  // COMISSAO | MENSALIDADE | HIBRIDO
+  commissionRate    Decimal? @db.Decimal(5, 2)    // % sobre reservas
+  monthlyFee        Decimal? @db.Decimal(10, 2)   // taxa mensal R$
+  directCommission  Decimal? @db.Decimal(5, 2)    // % em locações diretas
+  paymentDay        Int      @default(10)          // dia do repasse
+  financeNotes      String?
+
   ownerId      String
   owner        User              @relation("PropertyOwner", fields: [ownerId], references: [id])
   users        PropertyUser[]
@@ -114,6 +123,8 @@ model Property {
   inventory    InventoryItem[]
   partners     PropertyPartner[]
   inspections  Inspection[]
+  expenses     Expense[]
+  statements   OwnerStatement[]
 }
 
 model PropertyUser {
@@ -290,6 +301,42 @@ model MagicLink {
   createdById    String
   createdBy      User         @relation("MagicLinkCreator", fields: [createdById], references: [id])
   createdAt      DateTime     @default(now())
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  description String
+  amount      Decimal   @db.Decimal(10, 2)
+  category    String    // LIMPEZA | MANUTENCAO | MATERIAL | OUTRO
+  date        DateTime
+  receiptUrl  String?
+  approvedBy  String?
+  approvedAt  DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id])
+  createdById  String
+  createdBy    User     @relation("ExpenseCreator", fields: [createdById], references: [id])
+}
+
+model OwnerStatement {
+  id           String    @id @default(cuid())
+  month        Int
+  year         Int
+  grossRevenue Decimal   @db.Decimal(10, 2)
+  commission   Decimal   @db.Decimal(10, 2)
+  monthlyFee   Decimal   @db.Decimal(10, 2)
+  expenses     Decimal   @db.Decimal(10, 2)
+  netAmount    Decimal   @db.Decimal(10, 2)
+  status       String    @default("PENDENTE") // PENDENTE | PAGO
+  paidAt       DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
 }
 
 model Notification {

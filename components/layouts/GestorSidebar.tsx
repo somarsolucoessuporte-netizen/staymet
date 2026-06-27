@@ -48,10 +48,14 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
       <aside className="hidden lg:flex flex-col w-60 bg-[#0F172A] flex-shrink-0">
 
         {/* Logo */}
-        <div className="px-5 py-4 border-b border-white/5">
-          <Link href={href('/gestor/dashboard')}>
-            <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
-              <img src="/logo.jpg" alt="Staymet" className="h-7 w-auto" />
+        <div className="px-5 py-5 border-b border-white/5">
+          <Link href={href('/gestor/dashboard')} className="flex items-center gap-3 group">
+            <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-[#1A56DB]/30">
+              <span className="text-white font-bold text-lg tracking-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+            </div>
+            <div>
+              <span className="text-white font-bold text-xl tracking-tight leading-none" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+              <p className="text-white/30 text-[10px] font-medium tracking-widest uppercase mt-0.5">Gestão</p>
             </div>
           </Link>
         </div>
@@ -114,8 +118,11 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
           </button>
 
           {/* Logo mobile */}
-          <div className="lg:hidden">
-            <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto" />
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="w-7 h-7 bg-[#1A56DB] rounded-lg flex items-center justify-center shadow-md shadow-[#1A56DB]/20">
+              <span className="text-white font-bold text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+            </div>
+            <span className="text-gray-900 font-bold text-lg" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
           </div>
 
           {/* Busca desktop */}
@@ -174,8 +181,11 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
           />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#0F172A] flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/5">
-              <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
-                <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 bg-[#1A56DB] rounded-lg flex items-center justify-center shadow-md shadow-[#1A56DB]/20">
+                  <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+                </div>
+                <span className="text-white font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
               </div>
               <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white p-1">
                 <X size={20} />
