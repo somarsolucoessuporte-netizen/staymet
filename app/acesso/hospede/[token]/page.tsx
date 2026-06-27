@@ -2,36 +2,28 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { format } from 'date-fns'
+import Link from 'next/link'
+import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  Wifi, Copy, Check, MapPin, Clock, MessageCircle,
-  Wrench, Sparkles, Package, Phone, FileText,
-  ChevronRight, AlertTriangle,
+  Wifi, Wrench, MessageCircle, Map, BookOpen,
+  Star, ChevronRight, Clock, MapPin,
+  Sparkles, Package, Phone,
+  AlertTriangle, Copy, Check, ArrowRight,
 } from 'lucide-react'
+import { HospedeLayout } from '@/components/hospede/HospedeLayout'
 
-const quickActions = [
-  { type: 'LIMPEZA',   Icon: Sparkles,       label: 'Limpeza extra',        color: '#3B82F6', bg: '#EFF6FF' },
-  { type: 'MANUTENCAO',Icon: Wrench,          label: 'Manutenção',           color: '#F59E0B', bg: '#FFFBEB' },
-  { type: 'REPOSICAO', Icon: Package,         label: 'Reposição',            color: '#10B981', bg: '#ECFDF5' },
-  { type: 'SUPORTE',   Icon: MessageCircle,   label: 'Falar com anfitrião',  color: '#8B5CF6', bg: '#F5F3FF' },
-]
-
-export default function HospedeMagicPage() {
-  const params = useParams<{ token: string }>()
+export default function HospedePage() {
+  const params = useParams()
   const [data, setData] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [copied, setCopied] = useState(false)
-  const [activeSection, setActiveSection] = useState<string | null>(null)
-  const [requestNote, setRequestNote] = useState('')
-  const [requestSent, setRequestSent] = useState(false)
-  const [sending, setSending] = useState(false)
+  const [wifiCopied, setWifiCopied] = useState(false)
 
   useEffect(() => {
     fetch(`/api/magic-links/${params.token}`)
-      .then((r) => r.json())
-      .then((d) => {
+      .then(r => r.json())
+      .then(d => {
         if (d.error) setError(d.error)
         else setData(d.link)
       })
@@ -39,246 +31,243 @@ export default function HospedeMagicPage() {
       .finally(() => setLoading(false))
   }, [params.token])
 
-  const copyWifi = () => {
-    if (!data?.reservation?.property?.wifiPassword) return
-    navigator.clipboard.writeText(data.reservation.property.wifiPassword)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const copyWifi = async () => {
+    await navigator.clipboard.writeText(data?.reservation?.property?.wifiPassword || '')
+    setWifiCopied(true)
+    setTimeout(() => setWifiCopied(false), 2500)
   }
 
-  const sendRequest = async (type: string) => {
-    if (!data?.reservationId) return
-    setSending(true)
-    await fetch('/api/guest-requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type,
-        message: requestNote || type,
-        reservationId: data.reservationId,
-      }),
-    })
-    setSending(false)
-    setRequestSent(true)
-    setActiveSection(null)
-    setRequestNote('')
-    setTimeout(() => setRequestSent(false), 3000)
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #1A56DB 0%, #0F172A 100%)' }}>
-        <div className="text-white/50 text-sm animate-pulse">Carregando sua estadia...</div>
+  if (loading) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-5">
+      <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-100">
+        <img src="/logo.jpg" alt="Staymet" className="h-10 w-auto" />
       </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#0F172A] flex items-center justify-center px-6">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle size={28} className="text-red-400" />
-          </div>
-          <h2 className="text-white font-semibold text-lg mb-2">Link inválido ou expirado</h2>
-          <p className="text-white/40 text-sm">{error}</p>
-        </div>
+      <div className="flex gap-1.5">
+        {[0, 1, 2].map(i => (
+          <div
+            key={i}
+            className="w-1.5 h-1.5 bg-[#1A56DB]/30 rounded-full animate-bounce"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
       </div>
-    )
-  }
+    </div>
+  )
+
+  if (error) return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+      <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+        <AlertTriangle size={28} strokeWidth={1.5} className="text-red-400" />
+      </div>
+      <h2 className="font-bold text-gray-900 text-lg mb-2">Link inválido</h2>
+      <p className="text-gray-400 text-sm">{error}</p>
+      <p className="text-gray-300 text-xs mt-6">Staymet — Gestão completa. Estadia perfeita.</p>
+    </div>
+  )
 
   const reservation = data?.reservation
   const property = reservation?.property
-  const firstName = (data?.guestName ?? reservation?.guestName ?? 'Hóspede').split(' ')[0]
-  const nights = reservation
-    ? Math.ceil((new Date(reservation.checkOut).getTime() - new Date(reservation.checkIn).getTime()) / 86400000)
-    : 0
+  const guestName = data?.guestName || reservation?.guestName || 'Hóspede'
+  const firstName = guestName.split(' ')[0]
+  const checkIn = reservation?.checkIn ? new Date(reservation.checkIn) : null
+  const checkOut = reservation?.checkOut ? new Date(reservation.checkOut) : null
+  const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0
+  const base = `/acesso/hospede/${params.token}`
+
+  const quickServices = [
+    { icon: Sparkles, label: 'Limpeza extra', color: '#3B82F6', bg: '#EFF6FF', type: 'LIMPEZA' },
+    { icon: Wrench,   label: 'Manutenção',    color: '#F59E0B', bg: '#FFFBEB', type: 'MANUTENCAO' },
+    { icon: Package,  label: 'Reposição',     color: '#10B981', bg: '#ECFDF5', type: 'REPOSICAO' },
+    { icon: Map,      label: 'Guia local',    color: '#8B5CF6', bg: '#F5F3FF', type: null },
+  ]
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <HospedeLayout token={params.token as string} propertyName={property?.name || ''}>
+      <div className="pb-24">
 
-      {/* Hero gradient */}
-      <div style={{ background: 'linear-gradient(160deg, #1A56DB 0%, #0F172A 100%)' }}
-        className="px-5 pt-10 pb-8">
-        <div className="mb-6">
-          <div className="bg-white rounded-lg px-2.5 py-1.5 inline-block">
-            <img src="/logo.jpg" alt="Staymet" className="h-7 w-auto" />
-          </div>
-        </div>
-
-        <p className="text-blue-200 text-sm mb-1">Bem-vindo,</p>
-        <h1 className="text-white text-2xl font-bold mb-5" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-          {firstName}! 🌊
-        </h1>
-
-        {/* Card da estadia */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
-          {property?.coverImageUrl && (
-            <div className="h-28 rounded-xl overflow-hidden mb-3">
-              <img src={property.coverImageUrl} alt={property.name} className="w-full h-full object-cover" />
-            </div>
+        {/* HERO — foto do imóvel */}
+        <div className="relative h-72 bg-gray-100 overflow-hidden">
+          {property?.coverImageUrl ? (
+            <img src={property.coverImageUrl} alt={property.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-[#1A56DB]/20 to-[#0F172A]/40" />
           )}
-          <h2 className="text-white font-semibold text-base mb-1">{property?.name}</h2>
-          <div className="flex items-center gap-1 mb-3">
-            <MapPin size={11} className="text-blue-300" />
-            <span className="text-blue-200 text-xs">{property?.city}, {property?.state}</span>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+
+          {/* Logo no topo */}
+          <div className="absolute top-12 left-5">
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl px-2.5 py-1.5 inline-block shadow-sm">
+              <img src="/logo.jpg" alt="Staymet" className="h-5 w-auto" />
+            </div>
           </div>
-          <div className="flex gap-2">
-            <div className="flex-1 bg-white/10 rounded-xl p-2.5">
-              <p className="text-blue-300 text-[10px] uppercase tracking-wide mb-0.5">Check-in</p>
-              <p className="text-white text-sm font-semibold">
-                {reservation?.checkIn ? format(new Date(reservation.checkIn), 'dd/MM/yyyy') : '—'}
-              </p>
-              <p className="text-blue-200 text-xs">{property?.checkInTime}</p>
-            </div>
-            <div className="flex-1 bg-white/10 rounded-xl p-2.5">
-              <p className="text-blue-300 text-[10px] uppercase tracking-wide mb-0.5">Check-out</p>
-              <p className="text-white text-sm font-semibold">
-                {reservation?.checkOut ? format(new Date(reservation.checkOut), 'dd/MM/yyyy') : '—'}
-              </p>
-              <p className="text-blue-200 text-xs">{property?.checkOutTime}</p>
-            </div>
-            <div className="bg-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center min-w-[52px]">
-              <p className="text-white text-xl font-bold">{nights}</p>
-              <p className="text-blue-200 text-[10px]">noites</p>
-            </div>
+
+          {/* Saudação */}
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            <p className="text-white/70 text-sm mb-0.5">Bem-vindo,</p>
+            <h1
+              className="text-white text-2xl font-bold leading-tight"
+              style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
+            >
+              {firstName}
+            </h1>
+            <p className="text-white/70 text-sm mt-0.5">{property?.name}</p>
           </div>
         </div>
-      </div>
 
-      {/* Conteúdo */}
-      <div className="px-4 py-5 space-y-4 pb-12 max-w-lg mx-auto">
+        {/* CARD DA ESTADIA */}
+        <div className="mx-4 -mt-3 relative z-10">
+          <div className="bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.10)] border border-gray-100 overflow-hidden">
+            <div className="flex items-stretch">
+              <div className="flex-1 p-4">
+                <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider mb-1">Check-in</p>
+                <p className="text-gray-900 font-bold text-base">
+                  {checkIn ? format(checkIn, 'dd MMM', { locale: ptBR }) : '--'}
+                </p>
+                <p className="text-gray-400 text-xs flex items-center gap-1 mt-0.5">
+                  <Clock size={11} strokeWidth={1.5} />
+                  {property?.checkInTime || '14:00'}
+                </p>
+              </div>
 
-        {/* Wi-Fi destaque */}
-        {(property?.wifiName || property?.wifiPassword) && (
-          <div className="bg-[#1A56DB] rounded-2xl p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Wifi size={20} className="text-white" />
+              <div className="flex flex-col items-center justify-center px-4 border-x border-gray-50">
+                <div className="w-8 h-8 bg-[#1A56DB]/10 rounded-full flex items-center justify-center mb-0.5">
+                  <span className="text-[#1A56DB] font-bold text-sm">{nights}</span>
+                </div>
+                <span className="text-gray-400 text-[10px]">noites</span>
+              </div>
+
+              <div className="flex-1 p-4">
+                <p className="text-gray-400 text-[10px] font-semibold uppercase tracking-wider mb-1">Check-out</p>
+                <p className="text-gray-900 font-bold text-base">
+                  {checkOut ? format(checkOut, 'dd MMM', { locale: ptBR }) : '--'}
+                </p>
+                <p className="text-gray-400 text-xs flex items-center gap-1 mt-0.5">
+                  <Clock size={11} strokeWidth={1.5} />
+                  {property?.checkOutTime || '11:00'}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-blue-200 text-xs mb-0.5">Wi-Fi da casa</p>
-              <p className="text-white font-semibold text-sm truncate">{property.wifiName}</p>
-            </div>
-            {property?.wifiPassword && (
-              <button
-                onClick={copyWifi}
-                className="bg-white/15 hover:bg-white/25 active:scale-95 text-white text-xs font-medium px-3 py-2 rounded-xl transition-all flex items-center gap-1.5 flex-shrink-0"
+
+            {property?.address && (
+              <a
+                href={`https://maps.google.com/?q=${encodeURIComponent(property.address + ' ' + property.city)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-4 py-3 border-t border-gray-50 hover:bg-gray-50 transition-colors"
               >
-                {copied ? <Check size={13} /> : <Copy size={13} />}
-                {copied ? 'Copiado!' : 'Copiar senha'}
-              </button>
+                <MapPin size={14} strokeWidth={1.5} className="text-[#1A56DB] flex-shrink-0" />
+                <span className="text-gray-600 text-xs flex-1">{property.address}, {property.city}</span>
+                <ChevronRight size={14} strokeWidth={1.5} className="text-gray-300" />
+              </a>
             )}
           </div>
-        )}
-
-        {/* Feedback de solicitação enviada */}
-        {requestSent && (
-          <div className="bg-green-50 border border-green-100 rounded-xl p-3 flex items-center gap-2">
-            <Check size={16} className="text-green-600" />
-            <span className="text-green-700 text-sm font-medium">
-              Solicitação enviada! Em breve te atendemos.
-            </span>
-          </div>
-        )}
-
-        {/* Solicitações rápidas */}
-        <div>
-          <h3 className="font-semibold text-gray-900 text-sm mb-3">O que você precisa?</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {quickActions.map((action) => (
-              <button
-                key={action.type}
-                onClick={() => setActiveSection(action.type)}
-                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md active:scale-[0.97] transition-all text-left"
-              >
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-2.5"
-                  style={{ background: action.bg }}>
-                  <action.Icon size={18} style={{ color: action.color }} />
-                </div>
-                <p className="text-gray-800 text-sm font-medium leading-tight">{action.label}</p>
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Modal de solicitação inline */}
-        {activeSection && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-lg p-5">
-            <h3 className="font-semibold text-gray-900 mb-3">
-              {quickActions.find((a) => a.type === activeSection)?.label}
-            </h3>
-            <textarea
-              value={requestNote}
-              onChange={(e) => setRequestNote(e.target.value)}
-              placeholder="Descreva o que precisa (opcional)..."
-              className="w-full px-3.5 py-3 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/20 focus:border-[#1A56DB] resize-none mb-3"
-              rows={3}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => { setActiveSection(null); setRequestNote('') }}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => sendRequest(activeSection)}
-                disabled={sending}
-                className="flex-1 bg-[#1A56DB] text-white py-2.5 rounded-xl text-sm font-semibold disabled:opacity-60"
-              >
-                {sending ? 'Enviando...' : 'Enviar'}
-              </button>
+        {/* WI-FI */}
+        <div className="px-4 mt-5">
+          <div className="bg-[#0F172A] rounded-2xl p-4 flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Wifi size={22} strokeWidth={1.5} className="text-white" />
             </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white/50 text-[10px] font-semibold uppercase tracking-wider mb-0.5">Wi-Fi da estadia</p>
+              <p className="text-white font-bold text-base truncate">{property?.wifiName || 'Nome da rede'}</p>
+              <p className="text-white/40 text-xs truncate">
+                {property?.wifiPassword ? '••••••••' : 'Sem senha'}
+              </p>
+            </div>
+            <button
+              onClick={copyWifi}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all active:scale-95 flex-shrink-0 ${
+                wifiCopied ? 'bg-green-500 text-white' : 'bg-white text-[#0F172A] hover:bg-gray-100'
+              }`}
+            >
+              {wifiCopied ? <Check size={14} strokeWidth={1.5} /> : <Copy size={14} strokeWidth={1.5} />}
+              {wifiCopied ? 'Copiado' : 'Copiar'}
+            </button>
           </div>
-        )}
+        </div>
 
-        {/* Informações da casa */}
-        <div>
-          <h3 className="font-semibold text-gray-900 text-sm mb-3">Informações da estadia</h3>
-          <div className="space-y-2">
-            {[
-              {
-                Icon: Clock,
-                label: 'Horários',
-                value: `Check-in ${property?.checkInTime} · Check-out ${property?.checkOutTime}`,
-                href: null,
-              },
-              property?.rules ? {
-                Icon: FileText,
-                label: 'Regras da casa',
-                value: property.rules.length > 80 ? property.rules.slice(0, 80) + '…' : property.rules,
-                href: null,
-              } : null,
-              property?.address ? {
-                Icon: MapPin,
-                label: 'Endereço',
-                value: `${property.address}, ${property.city}`,
-                href: `https://maps.google.com/?q=${encodeURIComponent(`${property.address} ${property.city}`)}`,
-              } : null,
-            ].filter(Boolean).map((info: any, i) => (
-              <div
-                key={i}
-                className={`bg-white rounded-xl p-3.5 border border-gray-100 flex items-center gap-3 ${info.href ? 'cursor-pointer' : ''}`}
-                onClick={info.href ? () => window.open(info.href, '_blank') : undefined}
+        {/* SERVIÇOS RÁPIDOS */}
+        <div className="px-4 mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-gray-900 text-base" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+              O que você precisa?
+            </h2>
+            <Link href={`${base}/servicos`} className="text-[#1A56DB] text-xs font-medium flex items-center gap-1">
+              Ver todos <ArrowRight size={12} strokeWidth={1.5} />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-4 gap-3">
+            {quickServices.map(service => (
+              <Link
+                key={service.type ?? 'local'}
+                href={service.type ? `${base}/servicos?tipo=${service.type}` : `${base}/parceiros`}
               >
-                <div className="w-8 h-8 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <info.Icon size={14} className="text-gray-400" />
+                <div className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md active:scale-95 transition-all">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: service.bg }}>
+                    <service.icon size={20} strokeWidth={1.5} style={{ color: service.color }} />
+                  </div>
+                  <span className="text-[10px] font-semibold text-gray-600 text-center leading-tight">{service.label}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wide">{info.label}</p>
-                  <p className="text-gray-800 text-sm">{info.value}</p>
-                </div>
-                {info.href && <ChevronRight size={14} className="text-gray-300 flex-shrink-0" />}
-              </div>
+              </Link>
             ))}
           </div>
         </div>
 
-        <p className="text-gray-300 text-xs text-center pt-2">
-          Powered by Somar Soluções Digitais
-        </p>
+        {/* MENU */}
+        <div className="px-4 mt-6">
+          <h2 className="font-bold text-gray-900 text-base mb-3" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+            Sua estadia
+          </h2>
+
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+            {[
+              { icon: BookOpen, color: '#1A56DB', bg: '#EFF6FF', title: 'Regras da casa',           subtitle: 'Normas e informações importantes',    href: `${base}/regras` },
+              { icon: Map,      color: '#10B981', bg: '#ECFDF5', title: 'Guia local',               subtitle: 'Restaurantes, praias e passeios',      href: `${base}/parceiros` },
+              { icon: Phone,    color: '#F59E0B', bg: '#FFFBEB', title: 'Contatos de emergência',   subtitle: 'Hospital, bombeiros, polícia',          href: `${base}/informacoes` },
+              { icon: Star,     color: '#8B5CF6', bg: '#F5F3FF', title: 'Avaliar estadia',          subtitle: 'Nos conte como está sendo',            href: `${base}/avaliar` },
+            ].map((item, i) => (
+              <Link key={i} href={item.href}>
+                <div className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: item.bg }}>
+                    <item.icon size={18} strokeWidth={1.5} style={{ color: item.color }} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900 text-sm">{item.title}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{item.subtitle}</p>
+                  </div>
+                  <ChevronRight size={16} strokeWidth={1.5} className="text-gray-300" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* SUPORTE */}
+        <div className="px-4 mt-4">
+          <Link href={`${base}/suporte`}>
+            <div className="flex items-center gap-4 p-4 bg-[#1A56DB] rounded-2xl active:scale-[0.98] transition-all">
+              <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center flex-shrink-0">
+                <MessageCircle size={20} strokeWidth={1.5} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-semibold text-sm">Falar com o anfitrião</p>
+                <p className="text-white/60 text-xs mt-0.5">Estamos aqui para ajudar</p>
+              </div>
+              <ChevronRight size={16} strokeWidth={1.5} className="text-white/50" />
+            </div>
+          </Link>
+        </div>
+
+        {/* FOOTER */}
+        <div className="px-4 mt-8 text-center">
+          <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto mx-auto mb-1" />
+          <p className="text-gray-200 text-[10px] mt-0.5">Powered by Somar Soluções Digitais</p>
+        </div>
+
       </div>
-    </div>
+    </HospedeLayout>
   )
 }

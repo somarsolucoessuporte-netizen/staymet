@@ -1,4 +1,4 @@
-import { Calendar, Users, Home, Wifi, MapPin, Clock } from 'lucide-react'
+import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils'
 
@@ -93,7 +93,7 @@ export default async function GuestWelcomePage({
         <div className="bg-[#1A56DB] rounded-2xl px-5 py-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-base">👋</span>
+              <Users size={18} strokeWidth={1.5} className="text-white" />
             </div>
             <div>
               <p className="text-white/70 text-xs font-medium">Bem-vindo(a) à sua estadia</p>
@@ -179,14 +179,14 @@ export default async function GuestWelcomePage({
         {/* Links rápidos */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: 'Wi-Fi & Infos', href: `/${locale}/hospede/informacoes?code=${code}`, emoji: '📶', bg: 'bg-blue-50', color: 'text-blue-700' },
-            { label: 'Solicitações', href: `/${locale}/hospede/solicitacoes?code=${code}`, emoji: '💬', bg: 'bg-emerald-50', color: 'text-emerald-700' },
-            { label: 'Cardápio Local', href: `/${locale}/hospede/cardapio?code=${code}`, emoji: '🍽️', bg: 'bg-orange-50', color: 'text-orange-700' },
-            { label: 'Suporte', href: `/${locale}/hospede/suporte?code=${code}`, emoji: '🆘', bg: 'bg-purple-50', color: 'text-purple-700' },
+            { label: 'Wi-Fi & Infos',  href: `/${locale}/hospede/informacoes?code=${code}`,  Icon: Info,              bg: 'bg-blue-50',    color: 'text-blue-700'    },
+            { label: 'Solicitações',   href: `/${locale}/hospede/solicitacoes?code=${code}`,  Icon: MessageCircle,     bg: 'bg-emerald-50',  color: 'text-emerald-700' },
+            { label: 'Cardápio Local', href: `/${locale}/hospede/cardapio?code=${code}`,      Icon: UtensilsCrossed,   bg: 'bg-orange-50',  color: 'text-orange-700'  },
+            { label: 'Suporte',        href: `/${locale}/hospede/suporte?code=${code}`,        Icon: Headphones,    bg: 'bg-purple-50',  color: 'text-purple-700'  },
           ].map((item) => (
             <Link key={item.href} href={item.href}>
-              <div className={`${item.bg} rounded-2xl p-4 flex flex-col gap-2 hover:opacity-90 active:scale-[0.97] transition-all border border-transparent hover:border-${item.color.split('-')[1]}-100`}>
-                <span className="text-2xl">{item.emoji}</span>
+              <div className={`${item.bg} rounded-2xl p-4 flex flex-col gap-2 hover:opacity-90 active:scale-[0.97] transition-all`}>
+                <item.Icon size={20} strokeWidth={1.5} className={item.color} />
                 <p className={`text-sm font-semibold ${item.color}`}>{item.label}</p>
               </div>
             </Link>

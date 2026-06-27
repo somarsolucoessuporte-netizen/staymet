@@ -67,10 +67,10 @@ export default function GuestSolicitacoesPage() {
                 <SelectValue placeholder="O que você precisa?" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="LIMPEZA">🧹 Limpeza extra</SelectItem>
-                <SelectItem value="MANUTENCAO">🔧 Manutenção</SelectItem>
-                <SelectItem value="INFORMACAO">ℹ️ Informação</SelectItem>
-                <SelectItem value="OUTRO">💬 Outro</SelectItem>
+                <SelectItem value="LIMPEZA">Limpeza extra</SelectItem>
+                <SelectItem value="MANUTENCAO">Manutenção</SelectItem>
+                <SelectItem value="INFORMACAO">Informação</SelectItem>
+                <SelectItem value="OUTRO">Outro</SelectItem>
               </SelectContent>
             </Select>
           </div>

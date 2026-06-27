@@ -7,6 +7,7 @@ const schema = z.object({
   type: z.enum(['LIMPEZA', 'MANUTENCAO', 'INFORMACAO', 'REPOSICAO', 'SUPORTE', 'OUTRO']),
   message: z.string().min(1),
   guestId: z.string().optional(),
+  magicToken: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {

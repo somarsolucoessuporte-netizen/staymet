@@ -28,11 +28,11 @@ export default async function GuestCardapioPage({
   const partners = await getPartnersFromCode(code)
 
   const categoryLabels: Record<string, string> = {
-    LIMPEZA: '🧹 Limpeza',
-    MANUTENCAO: '🔧 Manutenção',
-    DELIVERY: '🛵 Delivery',
-    PASSEIO: '🏖️ Passeio',
-    OUTRO: '✨ Outro',
+    LIMPEZA: 'Limpeza',
+    MANUTENCAO: 'Manutenção',
+    DELIVERY: 'Delivery',
+    PASSEIO: 'Passeio',
+    OUTRO: 'Outro',
   }
 
   const foodPartners = partners.filter((p) => ['DELIVERY', 'OUTRO'].includes(p.category))

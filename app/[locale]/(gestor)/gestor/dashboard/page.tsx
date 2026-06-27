@@ -170,7 +170,7 @@ export default async function GestorDashboardPage({
       <div>
         <p className="text-sm text-gray-400 capitalize">{today}</p>
         <h1 className="text-2xl font-bold text-gray-900 mt-0.5" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-          {greeting()}, {data.userName} 👋
+          {greeting()}, {data.userName}
         </h1>
       </div>
 
