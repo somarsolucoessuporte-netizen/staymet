@@ -12,6 +12,7 @@ import {
   AlertTriangle, Copy, Check, ArrowRight,
 } from 'lucide-react'
 import { HospedeLayout } from '@/components/hospede/HospedeLayout'
+import { StaymetLogo } from '@/components/ui/StaymetLogo'
 
 export default function HospedePage() {
   const params = useParams()
@@ -38,15 +39,13 @@ export default function HospedePage() {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-5">
-      <div className="bg-white rounded-2xl p-3 shadow-lg border border-gray-100">
-        <img src="/logo.jpg" alt="Staymet" className="h-10 w-auto" />
-      </div>
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center gap-5">
+      <StaymetLogo variant="dark" size="md" />
       <div className="flex gap-1.5">
         {[0, 1, 2].map(i => (
           <div
             key={i}
-            className="w-1.5 h-1.5 bg-[#1A56DB]/30 rounded-full animate-bounce"
+            className="w-1.5 h-1.5 bg-[#1A56DB]/50 rounded-full animate-bounce"
             style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}
@@ -95,11 +94,8 @@ export default function HospedePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
 
           {/* Logo no topo */}
-          <div className="absolute top-12 left-5 flex items-center gap-2">
-            <div className="w-7 h-7 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/20">
-              <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
-            <span className="text-white/90 text-sm font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+          <div className="absolute top-12 left-5">
+            <StaymetLogo variant="hero" size="sm" />
           </div>
 
           {/* Saudação */}

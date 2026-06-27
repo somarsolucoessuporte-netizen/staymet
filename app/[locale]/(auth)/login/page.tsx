@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
+import { StaymetLogo } from '@/components/ui/StaymetLogo'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -71,11 +72,8 @@ export default function LoginPage() {
         />
 
         {/* Logo */}
-        <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center shadow-lg shadow-[#1A56DB]/30">
-            <span className="text-white font-bold text-base" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-          </div>
-          <span className="text-white font-semibold text-lg" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+        <div className="relative">
+          <StaymetLogo variant="dark" size="md" />
         </div>
 
         {/* Copy central */}
@@ -118,11 +116,8 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
 
           {/* Logo mobile */}
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-[#1A56DB] rounded-2xl flex items-center justify-center shadow-lg shadow-[#1A56DB]/30">
-              <span className="text-white font-bold text-xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
-            <span className="text-gray-900 font-bold text-2xl" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+          <div className="lg:hidden flex justify-center mb-8">
+            <StaymetLogo variant="light" size="lg" />
           </div>
 
           {/* Heading */}

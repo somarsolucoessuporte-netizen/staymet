@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, Users, Calendar, AlertCircle, BarChart3, Settings, ExternalLink } from 'lucide-react'
+import { StaymetLogo } from '@/components/ui/StaymetLogo'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -68,11 +69,8 @@ export default function AdminDashboard() {
 
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 bg-[#1A56DB] rounded-xl flex items-center justify-center shadow-lg shadow-[#1A56DB]/30">
-              <span className="text-white font-bold text-base" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
-            </div>
-            <span className="text-gray-400 text-xs font-medium uppercase tracking-wider">Admin</span>
+          <div className="mb-1">
+            <StaymetLogo variant="light" size="sm" label="Admin" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Painel Administrativo
