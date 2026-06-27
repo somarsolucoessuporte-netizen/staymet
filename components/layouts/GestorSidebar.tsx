@@ -50,7 +50,7 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
 
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/5">
-          <StaymetLogo variant="dark" size="md" subtitle="Gestão" href={href('/gestor/dashboard')} />
+          <StaymetLogo variant="dark" size="sm" subtitle="Gestão" href={href('/gestor/dashboard')} />
         </div>
 
         {/* Nav */}

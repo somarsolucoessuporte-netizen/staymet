@@ -95,7 +95,7 @@ export default function HospedePage() {
 
           {/* Logo no topo */}
           <div className="absolute top-12 left-5">
-            <StaymetLogo variant="hero" size="sm" />
+            <StaymetLogo variant="hero" size="xs" />
           </div>
 
           {/* Saudação */}

@@ -73,7 +73,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="relative">
-          <StaymetLogo variant="dark" size="md" />
+          <StaymetLogo variant="dark" size="lg" />
         </div>
 
         {/* Copy central */}
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
           {/* Logo mobile */}
           <div className="lg:hidden flex justify-center mb-8">
-            <StaymetLogo variant="light" size="lg" />
+            <StaymetLogo variant="light" size="md" />
           </div>
 
           {/* Heading */}

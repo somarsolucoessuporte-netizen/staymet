@@ -70,7 +70,7 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="mb-1">
-            <StaymetLogo variant="light" size="sm" label="Admin" />
+            <StaymetLogo variant="light" size="sm" subtitle="Admin" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Painel Administrativo
