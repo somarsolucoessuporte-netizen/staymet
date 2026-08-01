@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { format, differenceInDays } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -261,9 +262,7 @@ export default function HospedePage() {
         {/* FOOTER */}
         <div className="px-4 mt-8 text-center">
           <div className="flex items-center justify-center gap-1.5">
-            <div className="w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-[7px]">AM</span>
-            </div>
+            <Image src="/icone.png" alt="" width={20} height={20} className="rounded-md object-contain" />
             <span className="text-gray-400 text-xs font-semibold">Anfitrião Management</span>
           </div>
           <p className="text-gray-200 text-[10px] mt-0.5">Powered by Somar Soluções Digitais</p>

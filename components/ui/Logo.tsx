@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 
 interface LogoProps {
@@ -8,16 +9,16 @@ interface LogoProps {
 }
 
 const sizes = {
-  xs: { text: 'text-base', sub: 'text-[9px]' },
-  sm: { text: 'text-lg',   sub: 'text-[10px]' },
-  md: { text: 'text-2xl',  sub: 'text-xs' },
-  lg: { text: 'text-3xl',  sub: 'text-sm' },
+  xs: { w: 88,  sub: 'text-[9px]' },
+  sm: { w: 112, sub: 'text-[10px]' },
+  md: { w: 150, sub: 'text-xs' },
+  lg: { w: 190, sub: 'text-sm' },
 }
 
 const variants = {
-  dark:  { name: 'text-white',      sub: 'text-white/40' },
-  light: { name: 'text-[#1A56DB]',  sub: 'text-gray-400' },
-  hero:  { name: 'text-white',      sub: 'text-white/60' },
+  dark:  { filter: 'brightness(0) invert(1)', sub: 'text-white/40' },
+  light: { filter: 'none',                    sub: 'text-gray-400' },
+  hero:  { filter: 'brightness(0) invert(1)', sub: 'text-white/60' },
 }
 
 export function Logo({
@@ -30,16 +31,18 @@ export function Logo({
   const v = variants[variant]
 
   const content = (
-    <div className="flex flex-col">
-      <span
-        className={`font-bold tracking-tight leading-none ${s.text} ${v.name}`}
-        style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
-      >
-        Anfitrião Management
-      </span>
+    <div className="flex flex-col items-start">
+      <Image
+        src="/logo.png"
+        alt="Anfitrião Management"
+        width={1200}
+        height={400}
+        priority
+        style={{ width: s.w, height: 'auto', filter: v.filter }}
+      />
       {subtitle && (
         <span
-          className={`font-semibold uppercase tracking-widest leading-none mt-0.5 ${s.sub} ${v.sub}`}
+          className={`font-semibold uppercase tracking-widest leading-none mt-1 ${s.sub} ${v.sub}`}
           style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
         >
           {subtitle}

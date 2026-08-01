@@ -1,5 +1,6 @@
 import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
 
 async function getReservationFromCode(code?: string) {
@@ -68,9 +69,7 @@ export default async function GuestWelcomePage({
         {/* Anfitrião Management badge */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
-            <div className="w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-[7px]">AM</span>
-            </div>
+            <Image src="/icone.png" alt="" width={20} height={20} className="rounded-md object-contain" />
             <span className="text-white text-xs font-medium">Anfitrião Management</span>
           </div>
         </div>

@@ -16,8 +16,8 @@ function isPublicPath(pathname: string): boolean {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Páginas de link mágico: bypass total (sem locale, sem auth)
-  if (pathname.startsWith('/acesso/')) {
+  // Páginas de link mágico e guia de instalação: bypass total (sem locale, sem auth)
+  if (pathname.startsWith('/acesso/') || pathname.startsWith('/instalar')) {
     return NextResponse.next()
   }
 

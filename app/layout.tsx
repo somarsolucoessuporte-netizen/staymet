@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import { AppEntryGate } from '@/components/shared/AppEntryGate'
 import './globals.css'
 
 const inter = Inter({
@@ -20,13 +21,16 @@ export const metadata: Metadata = {
   description: 'Gestão completa. Estadia perfeita.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/icons/favicon.svg',
-    apple: '/icons/icon-192x192.svg',
+    icon: '/icone.png',
+    apple: '/icone.png',
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'Anfitrião Management',
+  },
+  formatDetection: {
+    telephone: false,
   },
 }
 
@@ -44,7 +48,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${inter.variable} ${plusJakarta.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background">{children}</body>
+      <body className="min-h-full flex flex-col bg-background">
+        <AppEntryGate>{children}</AppEntryGate>
+      </body>
     </html>
   )
 }
