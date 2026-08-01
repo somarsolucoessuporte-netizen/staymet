@@ -1,8 +1,8 @@
-# Staymet — Gestão Gourmet do Seu Imóvel
+# Anfitrião Management — Gestão Completa. Estadia Perfeita.
 
 > *"O mordomo 5 estrelas do proprietário de imóvel de temporada."*
 
-**Staymet** é uma plataforma PWA de gestão completa de imóveis de temporada (praia, serra, lazer). Não faz aluguel — faz a **gestão profissional** do imóvel depois que a reserva chegou.
+**Anfitrião Management** é uma plataforma PWA de gestão completa de imóveis de temporada (praia, serra, lazer). Não faz aluguel — faz a **gestão profissional** do imóvel depois que a reserva chegou.
 
 ---
 
@@ -82,11 +82,11 @@ Acesse: [http://localhost:3000](http://localhost:3000)
 
 | Usuário | Email | Senha |
 |---|---|---|
-| Gestor | gestor@staymet.app | 123456 |
-| Proprietário | proprietario@staymet.app | 123456 |
-| Anfitrião | anfitriao@staymet.app | 123456 |
-| Hóspede | hospede@staymet.app | 123456 |
-| Prestador | prestador@staymet.app | 123456 |
+| Gestor | gestor@anfitriaoapp.com | 123456 |
+| Proprietário | proprietario@anfitriaoapp.com | 123456 |
+| Anfitrião | anfitriao@anfitriaoapp.com | 123456 |
+| Hóspede | hospede@anfitriaoapp.com | 123456 |
+| Prestador | prestador@anfitriaoapp.com | 123456 |
 
 **3 imóveis** | **2 reservas** | **5 tarefas** | **3 parceiros** | **2 ocorrências**
 

@@ -12,7 +12,7 @@ import {
   AlertTriangle, Copy, Check, ArrowRight,
 } from 'lucide-react'
 import { HospedeLayout } from '@/components/hospede/HospedeLayout'
-import { StaymetLogo } from '@/components/ui/StaymetLogo'
+import { Logo } from '@/components/ui/Logo'
 
 export default function HospedePage() {
   const params = useParams()
@@ -40,7 +40,7 @@ export default function HospedePage() {
 
   if (loading) return (
     <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center gap-5">
-      <StaymetLogo variant="dark" size="md" />
+      <Logo variant="dark" size="md" />
       <div className="flex gap-1.5">
         {[0, 1, 2].map(i => (
           <div
@@ -60,7 +60,7 @@ export default function HospedePage() {
       </div>
       <h2 className="font-bold text-gray-900 text-lg mb-2">Link inválido</h2>
       <p className="text-gray-400 text-sm">{error}</p>
-      <p className="text-gray-300 text-xs mt-6">Staymet — Gestão completa. Estadia perfeita.</p>
+      <p className="text-gray-300 text-xs mt-6">Anfitrião Management — Gestão completa. Estadia perfeita.</p>
     </div>
   )
 
@@ -95,7 +95,7 @@ export default function HospedePage() {
 
           {/* Logo no topo */}
           <div className="absolute top-12 left-5">
-            <StaymetLogo variant="hero" size="xs" />
+            <Logo variant="hero" size="xs" />
           </div>
 
           {/* Saudação */}
@@ -262,9 +262,9 @@ export default function HospedePage() {
         <div className="px-4 mt-8 text-center">
           <div className="flex items-center justify-center gap-1.5">
             <div className="w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-[9px]">S</span>
+              <span className="text-white font-bold text-[7px]">AM</span>
             </div>
-            <span className="text-gray-400 text-xs font-semibold">Staymet</span>
+            <span className="text-gray-400 text-xs font-semibold">Anfitrião Management</span>
           </div>
           <p className="text-gray-200 text-[10px] mt-0.5">Powered by Somar Soluções Digitais</p>
         </div>

@@ -60,7 +60,7 @@ export async function proxy(request: NextRequest) {
     const viewAs = request.nextUrl.searchParams.get('viewAs')
     if (viewAs) {
       const response = NextResponse.next()
-      response.headers.set('x-staymet-admin-bypass', '1')
+      response.headers.set('x-anfitriao-management-admin-bypass', '1')
       return response
     }
   }

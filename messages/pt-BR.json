@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Staymet",
+    "appName": "Anfitrião Management",
     "tagline": "Gestão gourmet do seu imóvel.",
     "loading": "Carregando...",
     "save": "Salvar",
@@ -35,7 +35,7 @@
     "name": "Nome completo",
     "phone": "Telefone",
     "role": "Perfil de acesso",
-    "loginTitle": "Bem-vindo ao Staymet",
+    "loginTitle": "Bem-vindo ao Anfitrião Management",
     "loginSubtitle": "Faça login para continuar",
     "registerTitle": "Criar conta",
     "registerSubtitle": "Preencha os dados abaixo",

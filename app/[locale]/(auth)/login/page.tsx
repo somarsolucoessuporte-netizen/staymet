@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
-import { StaymetLogo } from '@/components/ui/StaymetLogo'
+import { Logo } from '@/components/ui/Logo'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -73,7 +73,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div className="relative">
-          <StaymetLogo variant="dark" size="lg" />
+          <Logo variant="dark" size="lg" />
         </div>
 
         {/* Copy central */}
@@ -107,7 +107,7 @@ export default function LoginPage() {
 
         {/* Rodapé */}
         <p className="relative text-white/20 text-xs">
-          © 2025 Staymet · Powered by Somar Soluções Digitais
+          © 2025 Anfitrião Management · Powered by Somar Soluções Digitais
         </p>
       </div>
 
@@ -117,7 +117,7 @@ export default function LoginPage() {
 
           {/* Logo mobile */}
           <div className="lg:hidden flex justify-center mb-8">
-            <StaymetLogo variant="light" size="md" />
+            <Logo variant="light" size="md" />
           </div>
 
           {/* Heading */}

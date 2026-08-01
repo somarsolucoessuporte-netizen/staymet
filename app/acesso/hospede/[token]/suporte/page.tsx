@@ -53,11 +53,11 @@ export default function SuportePage() {
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-4 pt-12 pb-4 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#1A56DB]/10 rounded-full flex items-center justify-center">
-              <img src="/logo.jpg" alt="Staymet" className="h-6 w-auto" />
+            <div className="w-10 h-10 bg-[#1A56DB] rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-bold">AM</span>
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">Anfitrião Staymet</p>
+              <p className="font-bold text-gray-900 text-sm">Suporte Anfitrião Management</p>
               <div className="flex items-center gap-1.5">
                 <Circle size={6} strokeWidth={0} className="fill-green-500" />
                 <p className="text-gray-400 text-xs">Online agora</p>
@@ -70,7 +70,7 @@ export default function SuportePage() {
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 pb-32">
           <div className="flex gap-2">
             <div className="w-7 h-7 bg-[#1A56DB] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-              <span className="text-white text-[10px] font-bold">S</span>
+              <span className="text-white text-[7px] font-bold">AM</span>
             </div>
             <div className="bg-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[80%]">
               <p className="text-gray-800 text-sm">
@@ -83,7 +83,7 @@ export default function SuportePage() {
             <div key={i} className={`flex ${msg.role === 'guest' ? 'justify-end' : 'gap-2'}`}>
               {msg.role !== 'guest' && (
                 <div className="w-7 h-7 bg-[#1A56DB] rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                  <span className="text-white text-[10px] font-bold">S</span>
+                  <span className="text-white text-[7px] font-bold">AM</span>
                 </div>
               )}
               <div className={`rounded-2xl px-4 py-3 max-w-[80%] ${

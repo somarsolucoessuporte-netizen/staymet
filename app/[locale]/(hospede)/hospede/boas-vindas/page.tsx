@@ -65,13 +65,13 @@ export default async function GuestWelcomePage({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        {/* Staymet badge */}
+        {/* Anfitrião Management badge */}
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
           <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-3 py-1.5">
             <div className="w-5 h-5 bg-[#1A56DB] rounded-md flex items-center justify-center">
-              <span className="text-white font-bold text-[10px]">S</span>
+              <span className="text-white font-bold text-[7px]">AM</span>
             </div>
-            <span className="text-white text-xs font-medium">Staymet</span>
+            <span className="text-white text-xs font-medium">Anfitrião Management</span>
           </div>
         </div>
 
@@ -202,7 +202,7 @@ export default async function GuestWelcomePage({
         )}
 
         <p className="text-center text-[11px] text-gray-400 pt-2">
-          Powered by Staymet · Somar Soluções Digitais
+          Powered by Somar Soluções Digitais
         </p>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-interface StaymetLogoProps {
+interface LogoProps {
   variant?: 'dark' | 'light' | 'hero'
   size?: 'xs' | 'sm' | 'md' | 'lg'
   subtitle?: string
@@ -20,12 +20,12 @@ const variants = {
   hero:  { name: 'text-white',      sub: 'text-white/60' },
 }
 
-export function StaymetLogo({
+export function Logo({
   variant = 'dark',
   size = 'sm',
   subtitle,
   href,
-}: StaymetLogoProps) {
+}: LogoProps) {
   const s = sizes[size]
   const v = variants[variant]
 
@@ -35,7 +35,7 @@ export function StaymetLogo({
         className={`font-bold tracking-tight leading-none ${s.text} ${v.name}`}
         style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}
       >
-        Staymet
+        Anfitrião Management
       </span>
       {subtitle && (
         <span

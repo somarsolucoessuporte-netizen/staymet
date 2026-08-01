@@ -8,7 +8,7 @@ import {
   ClipboardList, AlertTriangle, DollarSign,
   LogOut, Bell, Search, Menu, X, Home,
 } from 'lucide-react'
-import { StaymetLogo } from '@/components/ui/StaymetLogo'
+import { Logo } from '@/components/ui/Logo'
 
 const navItems = [
   { label: 'Visão Geral', path: '/gestor/dashboard', icon: LayoutDashboard },
@@ -50,7 +50,7 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
 
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/5">
-          <StaymetLogo variant="dark" size="sm" subtitle="Gestão" href={href('/gestor/dashboard')} />
+          <Logo variant="dark" size="sm" subtitle="Gestão" href={href('/gestor/dashboard')} />
         </div>
 
         {/* Nav */}
@@ -112,7 +112,7 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
 
           {/* Logo mobile */}
           <div className="lg:hidden">
-            <StaymetLogo variant="light" size="sm" />
+            <Logo variant="light" size="sm" />
           </div>
 
           {/* Busca desktop */}
@@ -171,7 +171,7 @@ export function GestorSidebar({ children, locale, user }: GestorSidebarProps) {
           />
           <aside className="absolute left-0 top-0 bottom-0 w-64 bg-[#0F172A] flex flex-col">
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/5">
-              <StaymetLogo variant="dark" size="sm" />
+              <Logo variant="dark" size="sm" />
               <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white p-1">
                 <X size={20} />
               </button>

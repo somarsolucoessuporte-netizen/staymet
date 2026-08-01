@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Staymet",
+    "appName": "Anfitrião Management",
     "tagline": "Gourmet management for your property.",
     "loading": "Loading...",
     "save": "Save",
@@ -35,7 +35,7 @@
     "name": "Full name",
     "phone": "Phone",
     "role": "Access profile",
-    "loginTitle": "Welcome to Staymet",
+    "loginTitle": "Welcome to Anfitrião Management",
     "loginSubtitle": "Sign in to continue",
     "registerTitle": "Create account",
     "registerSubtitle": "Fill in the details below",

@@ -16,8 +16,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: 'Staymet — Gestão gourmet do seu imóvel',
-  description: 'Plataforma de gestão profissional de imóveis de temporada.',
+  title: 'Anfitrião Management — Gestão completa. Estadia perfeita.',
+  description: 'Gestão completa. Estadia perfeita.',
   manifest: '/manifest.json',
   icons: {
     icon: '/icons/favicon.svg',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Staymet',
+    title: 'Anfitrião Management',
   },
 }
 

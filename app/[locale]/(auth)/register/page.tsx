@@ -82,7 +82,7 @@ export default function RegisterPage() {
           <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-3">
             <span className="text-accent font-black text-xl">SM</span>
           </div>
-          <h1 className="text-2xl font-black text-primary">Staymet</h1>
+          <h1 className="text-2xl font-black text-primary">Anfitrião Management</h1>
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">

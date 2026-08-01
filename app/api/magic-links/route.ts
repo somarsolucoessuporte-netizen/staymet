@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     },
   })
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://staymet-rosy.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://anfitriao-management-rosy.vercel.app'
   const url =
     body.type === 'PRESTADOR'
       ? `${baseUrl}/acesso/prestador/${magicLink.token}`

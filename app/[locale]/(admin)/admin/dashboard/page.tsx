@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, Users, Calendar, AlertCircle, BarChart3, Settings, ExternalLink } from 'lucide-react'
-import { StaymetLogo } from '@/components/ui/StaymetLogo'
+import { Logo } from '@/components/ui/Logo'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -70,12 +70,12 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="mb-8">
           <div className="mb-1">
-            <StaymetLogo variant="light" size="sm" subtitle="Admin" />
+            <Logo variant="light" size="sm" subtitle="Admin" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             Painel Administrativo
           </h1>
-          <p className="text-gray-500 text-sm mt-0.5">Visão geral da plataforma Staymet</p>
+          <p className="text-gray-500 text-sm mt-0.5">Visão geral da plataforma Anfitrião Management</p>
         </div>
 
         {/* KPIs */}

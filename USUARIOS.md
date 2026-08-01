@@ -1,4 +1,4 @@
-# Gestão de Usuários — Staymet
+# Gestão de Usuários — Anfitrião Management
 
 ## Perfis de acesso
 
@@ -14,7 +14,7 @@
 ## Criar usuário via convite (produção)
 
 ### Admin (`/admin/usuarios`)
-1. Acesse `/pt-BR/admin/dashboard` com login `admin@staymet.app`
+1. Acesse `/pt-BR/admin/dashboard` com login `admin@anfitriaoapp.com`
 2. Menu: "Usuários"
 3. Botão "Convidar usuário"
 4. Preencha: nome, e-mail, perfil (qualquer role), imóveis opcionais
@@ -64,12 +64,12 @@ npx prisma studio
 
 | Perfil | E-mail | Senha |
 |--------|--------|-------|
-| Administrador | admin@staymet.app | (definido no Supabase) |
-| Gestor | gestor@staymet.app | (definido no Supabase) |
-| Proprietário | proprietario@staymet.app | (definido no Supabase) |
-| Anfitrião | anfitriao@staymet.app | (definido no Supabase) |
-| Prestador | prestador@staymet.app | (definido no Supabase) |
-| Hóspede | hospede@staymet.app | (definido no Supabase) |
+| Administrador | admin@anfitriaoapp.com | (definido no Supabase) |
+| Gestor | gestor@anfitriaoapp.com | (definido no Supabase) |
+| Proprietário | proprietario@anfitriaoapp.com | (definido no Supabase) |
+| Anfitrião | anfitriao@anfitriaoapp.com | (definido no Supabase) |
+| Prestador | prestador@anfitriaoapp.com | (definido no Supabase) |
+| Hóspede | hospede@anfitriaoapp.com | (definido no Supabase) |
 
 ## Rotas por perfil
 

@@ -45,12 +45,12 @@ async function main() {
 
   // Create Supabase users
   const [adminSb, gestorSb, proprietarioSb, anfitriaoSb, hospedeSb, prestadorSb] = await Promise.all([
-    createSupabaseUser('admin@staymet.app', '123456', 'Francisco Admin', 'ADMINISTRADOR'),
-    createSupabaseUser('gestor@staymet.app', '123456', 'Carlos Gestor', 'GESTOR'),
-    createSupabaseUser('proprietario@staymet.app', '123456', 'Maria Proprietária', 'PROPRIETARIO'),
-    createSupabaseUser('anfitriao@staymet.app', '123456', 'João Anfitrião', 'ANFITRIAO'),
-    createSupabaseUser('hospede@staymet.app', '123456', 'Ana Hóspede', 'HOSPEDE'),
-    createSupabaseUser('prestador@staymet.app', '123456', 'Pedro Limpeza', 'PRESTADOR'),
+    createSupabaseUser('admin@anfitriaoapp.com', '123456', 'Francisco Admin', 'ADMINISTRADOR'),
+    createSupabaseUser('gestor@anfitriaoapp.com', '123456', 'Carlos Gestor', 'GESTOR'),
+    createSupabaseUser('proprietario@anfitriaoapp.com', '123456', 'Maria Proprietária', 'PROPRIETARIO'),
+    createSupabaseUser('anfitriao@anfitriaoapp.com', '123456', 'João Anfitrião', 'ANFITRIAO'),
+    createSupabaseUser('hospede@anfitriaoapp.com', '123456', 'Ana Hóspede', 'HOSPEDE'),
+    createSupabaseUser('prestador@anfitriaoapp.com', '123456', 'Pedro Limpeza', 'PRESTADOR'),
   ])
 
   // Create DB users
@@ -59,7 +59,7 @@ async function main() {
       data: {
         supabaseId: adminSb.id,
         name: 'Francisco Admin',
-        email: 'admin@staymet.app',
+        email: 'admin@anfitriaoapp.com',
         role: 'ADMINISTRADOR',
         phone: '(85) 99999-0000',
       },
@@ -68,7 +68,7 @@ async function main() {
       data: {
         supabaseId: gestorSb.id,
         name: 'Carlos Gestor',
-        email: 'gestor@staymet.app',
+        email: 'gestor@anfitriaoapp.com',
         role: 'GESTOR',
         phone: '(85) 99999-0001',
       },
@@ -77,7 +77,7 @@ async function main() {
       data: {
         supabaseId: proprietarioSb.id,
         name: 'Maria Proprietária',
-        email: 'proprietario@staymet.app',
+        email: 'proprietario@anfitriaoapp.com',
         role: 'PROPRIETARIO',
         phone: '(85) 99999-0002',
       },
@@ -86,7 +86,7 @@ async function main() {
       data: {
         supabaseId: anfitriaoSb.id,
         name: 'João Anfitrião',
-        email: 'anfitriao@staymet.app',
+        email: 'anfitriao@anfitriaoapp.com',
         role: 'ANFITRIAO',
         phone: '(85) 99999-0003',
       },
@@ -95,7 +95,7 @@ async function main() {
       data: {
         supabaseId: hospedeSb.id,
         name: 'Ana Hóspede',
-        email: 'hospede@staymet.app',
+        email: 'hospede@anfitriaoapp.com',
         role: 'HOSPEDE',
       },
     }),
@@ -103,7 +103,7 @@ async function main() {
       data: {
         supabaseId: prestadorSb.id,
         name: 'Pedro Limpeza',
-        email: 'prestador@staymet.app',
+        email: 'prestador@anfitriaoapp.com',
         role: 'PRESTADOR',
         phone: '(85) 99999-0005',
       },
@@ -396,12 +396,12 @@ async function main() {
   console.log('✅ Seed concluído com sucesso!')
   console.log('')
   console.log('👤 Usuários criados:')
-  console.log('   admin@staymet.app / 123456')
-  console.log('   gestor@staymet.app / 123456')
-  console.log('   proprietario@staymet.app / 123456')
-  console.log('   anfitriao@staymet.app / 123456')
-  console.log('   hospede@staymet.app / 123456')
-  console.log('   prestador@staymet.app / 123456')
+  console.log('   admin@anfitriaoapp.com / 123456')
+  console.log('   gestor@anfitriaoapp.com / 123456')
+  console.log('   proprietario@anfitriaoapp.com / 123456')
+  console.log('   anfitriao@anfitriaoapp.com / 123456')
+  console.log('   hospede@anfitriaoapp.com / 123456')
+  console.log('   prestador@anfitriaoapp.com / 123456')
   console.log('')
   console.log('🏠 Imóveis: 3 | 📅 Reservas: 2 | ✅ Tarefas: 5 | ⚠️ Ocorrências: 2')
 }

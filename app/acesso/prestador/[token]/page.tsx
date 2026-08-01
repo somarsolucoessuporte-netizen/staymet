@@ -133,9 +133,9 @@ export default function PrestadorMagicPage() {
       <div className="px-5 pt-10 pb-6">
         <div className="flex items-center gap-2 mb-5">
           <div className="w-7 h-7 bg-[#1A56DB] rounded-lg flex items-center justify-center shadow-md shadow-[#1A56DB]/30">
-            <span className="text-white font-bold text-sm" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>S</span>
+            <span className="text-white font-bold text-xs" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>AM</span>
           </div>
-          <span className="text-white font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Staymet</span>
+          <span className="text-white font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Anfitrião Management</span>
         </div>
         <p className="text-white/50 text-sm">Olá, {data?.prestadorName ?? 'prestador'}!</p>
         <h1 className="text-white text-xl font-bold mt-0.5" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>

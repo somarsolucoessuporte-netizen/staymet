@@ -1,4 +1,4 @@
-import { StaymetLogo } from '@/components/ui/StaymetLogo'
+import { Logo } from '@/components/ui/Logo'
 
 interface HospedeHeaderProps {
   title: string
@@ -10,7 +10,7 @@ export function HospedeHeader({ title, subtitle, transparent = false }: HospedeH
   return (
     <div className={`px-5 pt-14 pb-5 ${transparent ? 'absolute top-0 left-0 right-0 z-10' : 'bg-white border-b border-gray-50'}`}>
       <div className="mb-2">
-        <StaymetLogo variant={transparent ? 'hero' : 'light'} size="xs" />
+        <Logo variant={transparent ? 'hero' : 'light'} size="xs" />
       </div>
       <h1
         className={`text-xl font-bold ${transparent ? 'text-white' : 'text-gray-900'}`}
