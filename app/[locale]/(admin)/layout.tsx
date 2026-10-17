@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
+import { ToastContextProvider } from '@/components/ui/toast'
 
 export default async function AdminLayout({
   children,
@@ -18,5 +19,5 @@ export default async function AdminLayout({
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
   if (!dbUser || dbUser.role !== 'ADMINISTRADOR') redirect(`/${locale}/login`)
 
-  return <>{children}</>
+  return <ToastContextProvider>{children}</ToastContextProvider>
 }
