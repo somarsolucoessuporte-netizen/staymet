@@ -1,15 +1,56 @@
 // Constantes e helpers do Guia do Hóspede — compartilhados entre painel do anfitrião e telas do hóspede
 
-// section: em qual bloco o botão aparece na página pública do guia
-//   contatos → "Contatos úteis" (lista)   |   dicas → "Dicas & Roteiros" (cards)
+// Grupos do seletor de tipo no painel (e ordem dos botões no guia)
+export const PARTNER_GROUPS = [
+  { value: 'COMER',    label: 'Comer e comprar' },
+  { value: 'SERVICOS', label: 'Serviços da casa' },
+  { value: 'PASSEIOS', label: 'Passeios e transporte' },
+  { value: 'SAUDE',    label: 'Saúde e outros' },
+] as const
+
+// Paleta (ícone + fundo em gradiente suave)
+const C = {
+  verde:    { color: '#059669', bg: '#ECFDF5', bg2: '#D1FAE5' },
+  ambar:    { color: '#D97706', bg: '#FFFBEB', bg2: '#FEF3C7' },
+  laranja:  { color: '#EA580C', bg: '#FFF7ED', bg2: '#FFEDD5' },
+  laranjaV: { color: '#DC4A26', bg: '#FFF1EC', bg2: '#FFE0D4' },
+  azul:     { color: '#1A56DB', bg: '#EFF6FF', bg2: '#DBEAFE' },
+  ciano:    { color: '#0891B2', bg: '#ECFEFF', bg2: '#CFFAFE' },
+  rosa:     { color: '#DB2777', bg: '#FDF2F8', bg2: '#FCE7F3' },
+  indigo:   { color: '#4F46E5', bg: '#EEF2FF', bg2: '#E0E7FF' },
+  ceu:      { color: '#0284C7', bg: '#F0F9FF', bg2: '#E0F2FE' },
+  violeta:  { color: '#7C3AED', bg: '#F5F3FF', bg2: '#EDE9FE' },
+  amarelo:  { color: '#CA8A04', bg: '#FEFCE8', bg2: '#FEF9C3' },
+  vermelho: { color: '#DC2626', bg: '#FEF2F2', bg2: '#FEE2E2' },
+  cinza:    { color: '#64748B', bg: '#F8FAFC', bg2: '#E2E8F0' },
+} as const
+
+// icon: nome do ícone Phosphor (components/guia/CategoryIcon.tsx)
+// section: contatos → grade principal do guia | dicas → "Dicas & Roteiros"
+// Valores antigos (ANFITRIAO, MERCADO, RESTAURANTE, DELIVERY, PASSEIO, TRANSPORTE, OUTRO) mantidos.
 export const PARTNER_CATEGORIES = [
-  { value: 'ANFITRIAO',   label: 'Anfitrião',          emoji: '👋', section: 'contatos', iconBg: '#FFF0F0', badge: 'bg-red-50 text-red-700 border-red-200' },
-  { value: 'MERCADO',     label: 'Mercado',            emoji: '🛒', section: 'contatos', iconBg: '#E7F9F0', badge: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { value: 'RESTAURANTE', label: 'Restaurante/Almoço', emoji: '🍽️', section: 'contatos', iconBg: '#FFF4E6', badge: 'bg-rose-50 text-rose-700 border-rose-200' },
-  { value: 'DELIVERY',    label: 'Delivery',           emoji: '🍕', section: 'contatos', iconBg: '#FFF0F0', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
-  { value: 'PASSEIO',     label: 'Passeio/Dica',       emoji: '🏖️', section: 'dicas',    iconBg: '#F5E6C8', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
-  { value: 'TRANSPORTE',  label: 'Transporte',         emoji: '🚌', section: 'dicas',    iconBg: '#E8F1FD', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  { value: 'OUTRO',       label: 'Outro',              emoji: '📌', section: 'contatos', iconBg: '#F3F0FD', badge: 'bg-slate-50 text-slate-700 border-slate-200' },
+  { value: 'MERCADO',     label: 'Mercado',            group: 'COMER',    section: 'contatos', icon: 'ShoppingCart',    ...C.verde },
+  { value: 'PADARIA',     label: 'Padaria',            group: 'COMER',    section: 'contatos', icon: 'Bread',           ...C.ambar },
+  { value: 'RESTAURANTE', label: 'Restaurante',        group: 'COMER',    section: 'contatos', icon: 'ForkKnife',       ...C.laranja },
+  { value: 'PIZZARIA',    label: 'Pizzaria',           group: 'COMER',    section: 'contatos', icon: 'Pizza',           ...C.laranjaV },
+  { value: 'LANCHES',     label: 'Lanches',            group: 'COMER',    section: 'contatos', icon: 'Hamburger',       ...C.ambar },
+  { value: 'DELIVERY',    label: 'Delivery',           group: 'COMER',    section: 'contatos', icon: 'Moped',           ...C.laranja },
+  { value: 'ANFITRIAO',   label: 'Anfitrião',          group: 'SERVICOS', section: 'contatos', icon: 'HandWaving',      ...C.azul },
+  { value: 'CASEIRO',     label: 'Caseiro',            group: 'SERVICOS', section: 'contatos', icon: 'Key',             ...C.azul },
+  { value: 'GAS_AGUA',    label: 'Gás e água',         group: 'SERVICOS', section: 'contatos', icon: 'Flame',           ...C.ciano },
+  { value: 'LIMPEZA',     label: 'Limpeza',            group: 'SERVICOS', section: 'contatos', icon: 'Broom',           ...C.rosa },
+  { value: 'MANUTENCAO',  label: 'Manutenção',         group: 'SERVICOS', section: 'contatos', icon: 'Wrench',          ...C.ambar },
+  { value: 'LAVANDERIA',  label: 'Lavanderia',         group: 'SERVICOS', section: 'contatos', icon: 'TShirt',          ...C.indigo },
+  { value: 'PASSEIO',     label: 'Passeio',            group: 'PASSEIOS', section: 'dicas',    icon: 'Jeep',            ...C.ceu },
+  { value: 'PRAIA',       label: 'Praia',              group: 'PASSEIOS', section: 'dicas',    icon: 'Waves',           ...C.ceu },
+  { value: 'ESPORTE',     label: 'Esporte',            group: 'PASSEIOS', section: 'dicas',    icon: 'Wind',            ...C.ceu },
+  { value: 'ROTA',        label: 'Rota',               group: 'PASSEIOS', section: 'dicas',    icon: 'MapTrifold',      ...C.violeta },
+  { value: 'TRANSPORTE',  label: 'Transporte',         group: 'PASSEIOS', section: 'dicas',    icon: 'Bus',             ...C.indigo },
+  { value: 'TAXI',        label: 'Táxi',               group: 'PASSEIOS', section: 'dicas',    icon: 'Taxi',            ...C.amarelo },
+  { value: 'TRANSFER',    label: 'Transfer',           group: 'PASSEIOS', section: 'dicas',    icon: 'Airplane',        ...C.indigo },
+  { value: 'FARMACIA',    label: 'Farmácia',           group: 'SAUDE',    section: 'contatos', icon: 'Pill',            ...C.vermelho },
+  { value: 'SAUDE',       label: 'Saúde',              group: 'SAUDE',    section: 'contatos', icon: 'FirstAid',        ...C.vermelho },
+  { value: 'OUTRO',       label: 'Outro',              group: 'SAUDE',    section: 'contatos', icon: 'DotsThreeCircle', ...C.cinza },
 ] as const
 
 export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number]['value']
@@ -37,8 +78,10 @@ export function formatWhatsappBR(digits: string) {
 
 // ─── Mensagens prontas do WhatsApp (guia do hóspede + prévia no painel) ───
 
-/** Categorias em que o hóspede faz pedido com entrega */
-export const ORDER_CATEGORIES = ['MERCADO', 'RESTAURANTE', 'DELIVERY'] as const
+/** Categorias em que o hóspede faz pedido com entrega (mensagem leva o endereço) */
+export const ORDER_CATEGORIES = [
+  'MERCADO', 'PADARIA', 'RESTAURANTE', 'PIZZARIA', 'LANCHES', 'DELIVERY', 'GAS_AGUA', 'FARMACIA',
+] as const
 
 export function isOrderCategory(category: string) {
   return (ORDER_CATEGORIES as readonly string[]).includes(category)

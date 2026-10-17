@@ -7,10 +7,10 @@ import { HospedeHeader } from '@/components/hospede/HospedeHeader'
 import { Star, CheckCircle } from 'lucide-react'
 
 const CATEGORIES = [
-  { key: 'limpeza',      label: 'Limpeza',      icon: '✓', desc: 'Estado geral e limpeza do imóvel' },
-  { key: 'conforto',     label: 'Conforto',     icon: '✓', desc: 'Camas, ar-condicionado, comodidades' },
-  { key: 'localizacao',  label: 'Localização',  icon: '✓', desc: 'Acesso e proximidade de pontos de interesse' },
-  { key: 'atendimento',  label: 'Atendimento',  icon: '✓', desc: 'Suporte e comunicação com o anfitrião' },
+  { key: 'limpeza',      label: 'Limpeza',      desc: 'Estado geral e limpeza do imóvel' },
+  { key: 'conforto',     label: 'Conforto',     desc: 'Camas, ar-condicionado, comodidades' },
+  { key: 'localizacao',  label: 'Localização',  desc: 'Acesso e proximidade de pontos de interesse' },
+  { key: 'atendimento',  label: 'Atendimento',  desc: 'Suporte e comunicação com o anfitrião' },
 ]
 
 export default function AvaliarPage() {

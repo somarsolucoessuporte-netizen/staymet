@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getCategoryMeta, PARTNER_CATEGORIES, buildGuestMessage, isOrderCategory, withWhatsappText } from '@/lib/guia'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { GuiaGrid, type GuiaCardData } from '@/components/guia/GuiaGrid'
-import { GuiaIcon } from '@/components/guia/categoryIcon'
+import { CategoryIcon } from '@/components/guia/CategoryIcon'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Guia público do hóspede: um link por imóvel, sem login.
@@ -24,6 +24,7 @@ async function getGuia(id: string) {
       wifiName: true,
       wifiPassword: true,
       deliveryInstructions: true,
+      suggestionsEnabled: true,
       partners: {
         where: { partner: { active: true } },
         select: {
@@ -54,9 +55,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 const EMERGENCIA = [
-  { label: '🚑 SAMU', num: '192' },
-  { label: '🔥 Bombeiros', num: '193' },
-  { label: '👮 Polícia Militar', num: '190' },
+  { label: 'SAMU', num: '192', kind: 'SAMU' },
+  { label: 'Bombeiros', num: '193', kind: 'BOMBEIROS' },
+  { label: 'Polícia Militar', num: '190', kind: 'POLICIA' },
 ]
 
 const isMaps = (url: string) => /maps|goo\.gl/i.test(url)
@@ -78,7 +79,7 @@ function captionFor(item: Item, section: string) {
 
 function partnerCard(item: Item, guia: Guia): GuiaCardData {
   const section = getCategoryMeta(item.category)?.section ?? 'contatos'
-  const icon = <GuiaIcon kind={item.category} item={item} />
+  const icon = <CategoryIcon kind={item.category} />
 
   if (section === 'dicas') {
     return {
@@ -128,10 +129,11 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const hasWifi = !!(guia.wifiName || guia.wifiPassword)
 
   const emergencyLines = [
-    ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}` })),
+    ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}`, kind: e.kind })),
     ...(anfitriao?.whatsappUrl
       ? [{
-          label: '👋 Anfitrião',
+          label: 'Anfitrião',
+          kind: 'ANFITRIAO',
           value: 'WhatsApp',
           href: withWhatsappText(anfitriao.whatsappUrl, buildGuestMessage('ANFITRIAO', guia.name)),
           external: true,
@@ -144,7 +146,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
     ...(hasWifi
       ? [{
           id: 'wifi', title: 'Wi-Fi', caption: 'Rede e senha', group: 'principal' as const,
-          icon: <GuiaIcon kind="WIFI" />, sheetTitle: 'Wi-Fi da casa',
+          icon: <CategoryIcon kind="WIFI" />, sheetTitle: 'Wi-Fi da casa',
           sheet: { type: 'wifi' as const, network: guia.wifiName, password: guia.wifiPassword },
         }]
       : []),
@@ -152,19 +154,21 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
     ...(guia.deliveryInstructions
       ? [{
           id: 'entregador', title: 'Entregador', caption: 'Endereço para entregas', group: 'principal' as const,
-          icon: <GuiaIcon kind="ENTREGADOR" />, sheetTitle: 'Endereço para entregas',
+          icon: <CategoryIcon kind="ENTREGADOR" />, sheetTitle: 'Endereço para entregas',
           sheet: { type: 'entregador' as const, text: guia.deliveryInstructions },
         }]
       : []),
     {
       id: 'emergencia', title: 'Emergência', caption: 'Números úteis', group: 'principal', tone: 'red',
-      icon: <GuiaIcon kind="EMERGENCIA" />, sheetTitle: '🚨 Emergência',
+      icon: <CategoryIcon kind="EMERGENCIA" />, sheetTitle: 'Emergência',
       sheet: { type: 'emergencia', lines: emergencyLines },
     },
-    {
-      id: 'sugestoes', title: 'Caixinha de sugestões', caption: 'Sua opinião importa', group: 'principal',
-      icon: <GuiaIcon kind="SUGESTOES" />, sheetTitle: '', href: `/guia/${id}/sugestoes`,
-    },
+    ...(guia.suggestionsEnabled
+      ? [{
+          id: 'sugestoes', title: 'Caixinha de sugestões', caption: 'Sua opinião importa', group: 'principal' as const,
+          icon: <CategoryIcon kind="SUGESTOES" />, sheetTitle: '', href: `/guia/${id}/sugestoes`,
+        }]
+      : []),
     ...dicas.map((i) => partnerCard(i, guia)),
   ]
 

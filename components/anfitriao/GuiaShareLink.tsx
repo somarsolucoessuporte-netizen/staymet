@@ -15,7 +15,7 @@ export function GuiaShareLink({ url, propertyName }: { url: string; propertyName
   }
 
   const msg = encodeURIComponent(
-    `Olá! Seja bem-vindo(a) à ${propertyName} 🌊\n\nAqui está o guia da casa com Wi-Fi, contatos e dicas da região:\n${url}`,
+    `Olá! Seja bem-vindo(a) à ${propertyName}!\n\nAqui está o guia da casa com Wi-Fi, contatos e dicas da região:\n${url}`,
   )
 
   return (

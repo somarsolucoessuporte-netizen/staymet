@@ -3,6 +3,8 @@
 import { useRef, useState, useTransition } from 'react'
 import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
+import { CategoryPicker } from '@/components/anfitriao/CategoryPicker'
+import { CategoryIcon } from '@/components/guia/CategoryIcon'
 import { upsertPartner, removePartner, reorderPartner, togglePartnerActive } from '@/lib/actions/guia'
 import {
   PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, formatWhatsappBR, isOrderCategory, buildGuestMessage,
@@ -172,14 +174,13 @@ function PartnerRow({
   const rowRef = useRef<HTMLDivElement>(null)
   const lastSaved = useRef(saved)
 
-  const meta = getCategoryMeta(category)
   const active = partner?.active ?? true
   const href = testHref(category, whatsapp, link, partner?.phone ?? null)
 
-  const dirty = () => {
+  const dirty = (cat: PartnerCategory = category) => {
     const s = lastSaved.current
     return (
-      category !== s.category ||
+      cat !== s.category ||
       name.trim() !== s.name ||
       whatsapp.replace(/\D/g, '') !== s.whatsapp.replace(/\D/g, '') ||
       link.trim() !== s.link ||
@@ -188,8 +189,10 @@ function PartnerRow({
     )
   }
 
-  const save = () => {
-    if (status.kind === 'saving' || !dirty()) return
+  const save = (over: { category?: PartnerCategory } = {}) => {
+    const cat = over.category ?? category
+    const catIsOrder = isOrderCategory(cat)
+    if (status.kind === 'saving' || !dirty(cat)) return
     if (!name.trim()) {
       // linha nova vazia: só avisa; linha existente: não deixa apagar o texto
       if (!isNew || whatsapp || link) setStatus({ kind: 'error', msg: 'Informe o texto do botão.' })
@@ -200,12 +203,12 @@ function PartnerRow({
       const res = await upsertPartner(propertyId, {
         id: partner?.id,
         name,
-        category,
+        category: cat,
         whatsapp,
         externalUrl: link,
         description,
         // só categorias de pedido usam; nas outras o valor salvo fica intocado
-        ...(isOrder ? { deliveryNote } : {}),
+        ...(catIsOrder ? { deliveryNote } : {}),
       })
       if (!res.ok) {
         setStatus({ kind: 'error', msg: res.error })
@@ -213,9 +216,9 @@ function PartnerRow({
       }
       const digits = whatsapp.replace(/\D/g, '')
       lastSaved.current = {
-        category, name: name.trim(), whatsapp: formatWhatsappBR(digits), link: link.trim(),
+        category: cat, name: name.trim(), whatsapp: formatWhatsappBR(digits), link: link.trim(),
         description: description.trim(),
-        deliveryNote: isOrder ? deliveryNote.trim() : lastSaved.current.deliveryNote,
+        deliveryNote: catIsOrder ? deliveryNote.trim() : lastSaved.current.deliveryNote,
       }
       setWhatsapp(formatWhatsappBR(digits))
       if (isNew) {
@@ -261,19 +264,14 @@ function PartnerRow({
     >
       {/* Linha 1: ícone/tipo + texto + ativo */}
       <div className="flex items-center gap-2">
-        <label className="relative flex h-10 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xl">
-          <span aria-hidden>{meta?.emoji ?? '📌'}</span>
-          <select
-            aria-label="Tipo do botão"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as PartnerCategory)}
-            className="absolute inset-0 cursor-pointer opacity-0"
-          >
-            {PARTNER_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
-            ))}
-          </select>
-        </label>
+        <CategoryPicker
+          value={category}
+          onChange={(v) => {
+            setCategory(v)
+            // linha existente: troca de tipo salva na hora (o seletor abre fora da linha)
+            if (!isNew) save({ category: v })
+          }}
+        />
         <input
           aria-label="Texto do botão"
           value={name}
@@ -363,7 +361,7 @@ function PartnerRow({
         <div className="flex h-[52px] w-28 shrink-0 flex-col items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-1.5">
           {active ? (
             <>
-              <span className="text-lg leading-none">{meta?.emoji ?? '📌'}</span>
+              <CategoryIcon kind={category} size={26} className="rounded-lg" />
               <span className="mt-0.5 w-full truncate text-center text-[11px] font-semibold text-[#0F172A]">{name || 'Texto do botão'}</span>
             </>
           ) : (

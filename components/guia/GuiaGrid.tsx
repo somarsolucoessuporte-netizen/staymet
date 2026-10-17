@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ChevronDown, Copy, ExternalLink, MapPin, Phone, Send } from 'lucide-react'
 import { GuiaSheet } from '@/components/guia/GuiaSheet'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
+import { CategoryIcon } from '@/components/guia/CategoryIcon'
 
 // Dados montados no servidor (app/guia/[id]/page.tsx); ícones já vêm renderizados
 export type GuiaSheetData =
@@ -21,7 +22,7 @@ export type GuiaSheetData =
       externalUrl: string | null
     }
   | { type: 'dica'; name: string; description: string | null; externalUrl: string | null; whatsappUrl: string | null; phone: string | null }
-  | { type: 'emergencia'; lines: { label: string; value: string; href: string; external?: boolean }[] }
+  | { type: 'emergencia'; lines: { label: string; value: string; href: string; kind: string; external?: boolean }[] }
 
 export type GuiaCardData = {
   id: string
@@ -135,7 +136,7 @@ function WifiSheet({ network, password }: { network: string | null; password: st
             <p className="truncate text-base font-bold">{network || '—'}</p>
           </div>
           {network && (
-            <GuiaCopyButton text={network} toast="✅ Nome da rede copiado" className={copyBtn}>
+            <GuiaCopyButton text={network} toast="Nome da rede copiado" className={copyBtn}>
               <Copy size={14} /> Copiar
             </GuiaCopyButton>
           )}
@@ -146,7 +147,7 @@ function WifiSheet({ network, password }: { network: string | null; password: st
             <p className="break-all font-mono text-xl font-bold tracking-wide">{password || 'Rede aberta'}</p>
           </div>
           {password && (
-            <GuiaCopyButton text={password} toast="✅ Senha copiada" className={copyBtn}>
+            <GuiaCopyButton text={password} toast="Senha copiada" className={copyBtn}>
               <Copy size={14} /> Copiar
             </GuiaCopyButton>
           )}
@@ -181,7 +182,7 @@ function EntregadorSheet({ text }: { text: string }) {
         {text}
       </div>
       <div className="flex gap-2">
-        <GuiaCopyButton text={text} toast="✅ Texto copiado" className={secondaryBtn}>
+        <GuiaCopyButton text={text} toast="Texto copiado" className={secondaryBtn}>
           <Copy size={16} /> Copiar texto
         </GuiaCopyButton>
         <a
@@ -291,7 +292,8 @@ function EmergenciaSheet({ lines }: { lines: Extract<GuiaSheetData, { type: 'eme
     <div className="divide-y divide-gray-100">
       {lines.map((l) => (
         <div key={l.href} className="flex h-16 items-center justify-between gap-3">
-          <div>
+          <CategoryIcon kind={l.kind} size={40} />
+          <div className="min-w-0 flex-1">
             <p className="text-[15px] font-semibold text-[#0F172A]">{l.label}</p>
             {!l.external && <p className="text-xl font-extrabold tabular-nums text-[#DC2626]">{l.value}</p>}
           </div>

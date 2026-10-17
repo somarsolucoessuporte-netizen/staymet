@@ -7,6 +7,7 @@ import { getGuiaConfig } from '@/lib/actions/guia'
 import { GuiaWifiForm } from '@/components/anfitriao/GuiaWifiForm'
 import { GuiaPartners } from '@/components/anfitriao/GuiaPartners'
 import { GuiaShareLink } from '@/components/anfitriao/GuiaShareLink'
+import { GuiaSuggestionsToggle } from '@/components/anfitriao/GuiaSuggestionsToggle'
 import { cn } from '@/lib/utils'
 
 export default async function AnfitriaoGuiaPage({
@@ -114,6 +115,13 @@ export default async function AnfitriaoGuiaPage({
               deliveryNote: p.deliveryNote,
             }))}
           />
+        </CardContent>
+      </Card>
+
+      {/* Caixinha de sugestões */}
+      <Card>
+        <CardContent className="pt-4">
+          <GuiaSuggestionsToggle key={property.id} propertyId={property.id} enabled={property.suggestionsEnabled} />
         </CardContent>
       </Card>
 

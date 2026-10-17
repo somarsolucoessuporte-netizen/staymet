@@ -110,7 +110,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
           </h2>
           {summary.attention.length === 0 ? (
             <p className="rounded-3xl bg-white p-5 text-center text-sm text-[#64748B] ring-1 ring-black/5">
-              Tudo em ordem por aqui ✨
+              Tudo em ordem por aqui.
             </p>
           ) : (
             <div className="divide-y divide-gray-100 overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">

@@ -78,7 +78,7 @@ export async function getGuiaConfig(propertyId: string) {
       where: { id: propertyId },
       select: {
         id: true, name: true,
-        wifiName: true, wifiPassword: true, deliveryInstructions: true,
+        wifiName: true, wifiPassword: true, deliveryInstructions: true, suggestionsEnabled: true,
         partners: {
           include: { partner: true },
           orderBy: [{ partner: { sortOrder: 'asc' } }, { partner: { name: 'asc' } }],
@@ -119,6 +119,18 @@ export async function updatePropertyGuia(
     const parsed = guiaSchema.parse(data)
     await prisma.property.update({ where: { id: propertyId }, data: parsed })
     refresh()
+    return { ok: true }
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+/** Mostra/esconde a caixinha de sugestões no guia do hóspede */
+export async function setSuggestionsEnabled(propertyId: string, enabled: boolean): Promise<ActionResult> {
+  try {
+    await assertAccess(propertyId)
+    await prisma.property.update({ where: { id: propertyId }, data: { suggestionsEnabled: enabled } })
+    refreshGuia(propertyId)
     return { ok: true }
   } catch (e) {
     return fail(e)

@@ -28,8 +28,9 @@ export async function submitSuggestion(input: z.input<typeof schema>): Promise<R
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' }
     const { propertyId, topic, text, photoUrl } = parsed.data
 
-    const property = await prisma.property.findFirst({ where: { id: propertyId, active: true }, select: { id: true } })
+    const property = await prisma.property.findFirst({ where: { id: propertyId, active: true }, select: { suggestionsEnabled: true } })
     if (!property) return { ok: false, error: 'Imóvel não encontrado.' }
+    if (!property.suggestionsEnabled) return { ok: false, error: 'A caixinha de sugestões está desativada neste imóvel.' }
 
     // Quem entrou por link mágico ainda não tem User: cria como HOSPEDE (mesma regra do login com Google)
     const meta = authUser.user_metadata ?? {}

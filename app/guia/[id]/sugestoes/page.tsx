@@ -18,7 +18,10 @@ export const metadata: Metadata = {
 
 export default async function SugestoesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const property = await prisma.property.findFirst({ where: { id, active: true }, select: { id: true, name: true } })
+  const property = await prisma.property.findFirst({
+    where: { id, active: true },
+    select: { id: true, name: true, suggestionsEnabled: true },
+  })
   if (!property) notFound()
 
   const supabase = await createClient()
@@ -47,7 +50,13 @@ export default async function SugestoesPage({ params }: { params: Promise<{ id: 
         </header>
 
         <main className="px-4 py-6">
-          <SuggestionFlow key={user?.email ?? 'anon'} propertyId={property.id} propertyName={property.name} user={user} />
+          {property.suggestionsEnabled ? (
+            <SuggestionFlow key={user?.email ?? 'anon'} propertyId={property.id} propertyName={property.name} user={user} />
+          ) : (
+            <p className="rounded-2xl bg-white p-5 text-center text-sm text-[#64748B] ring-1 ring-black/5">
+              A caixinha de sugestões não está disponível para este imóvel no momento.
+            </p>
+          )}
         </main>
       </div>
       <SomarFooter className="mt-auto pb-[calc(12px+env(safe-area-inset-bottom,0px))]" />

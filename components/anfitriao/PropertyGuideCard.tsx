@@ -63,7 +63,7 @@ export function PropertyGuideCard({ property: p, locale, origin }: { property: P
           <Eye size={16} /> Ver como hóspede
         </a>
         <div className="grid grid-cols-2 gap-2">
-          <GuiaCopyButton text={`${origin}/guia/${p.id}`} toast="✅ Link do guia copiado!" className={`${btn} bg-[#F1F5FF] text-[#1A56DB]`}>
+          <GuiaCopyButton text={`${origin}/guia/${p.id}`} toast="Link do guia copiado" className={`${btn} bg-[#F1F5FF] text-[#1A56DB]`}>
             <Link2 size={14} /> Copiar link
           </GuiaCopyButton>
           <Link href={`/${locale}/anfitriao/guia?propertyId=${p.id}`} className={`${btn} bg-[#F1F5FF] text-[#1A56DB]`}>

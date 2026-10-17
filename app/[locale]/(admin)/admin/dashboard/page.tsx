@@ -156,7 +156,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
                         </Link>
                         <GuiaCopyButton
                           text={guiaUrl}
-                          toast="✅ Link do guia copiado!"
+                          toast="Link do guia copiado"
                           className="flex h-10 items-center justify-center gap-1.5 rounded-2xl bg-[#F1F5FF] text-xs font-semibold text-[#1A56DB] transition active:scale-[0.98]"
                         >
                           <Link2 size={14} /> Copiar link
