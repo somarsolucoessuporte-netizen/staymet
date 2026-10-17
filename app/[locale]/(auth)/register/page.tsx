@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { AuthBrand, AuthFooter } from '@/components/auth/AuthBrand'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -72,12 +73,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
       <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center mb-3">
-            <span className="text-accent font-black text-xl">SM</span>
-          </div>
-          <h1 className="text-2xl font-black text-primary">Anfitrião Management</h1>
-        </div>
+        <AuthBrand />
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
           <h2 className="text-lg font-bold mb-1">Criar conta</h2>
@@ -131,6 +127,8 @@ export default function RegisterPage() {
             Entrar
           </Link>
         </p>
+
+        <AuthFooter className="mt-8" />
       </div>
     </div>
   )

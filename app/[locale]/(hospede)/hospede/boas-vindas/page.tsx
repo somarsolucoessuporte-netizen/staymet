@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate, getRoleDashboard } from '@/lib/utils'
 import { getCurrentDbUser } from '@/lib/guia-access'
+import { SOMAR_WHATSAPP_URL } from '@/lib/somar'
 
 async function getReservationFromCode(code?: string) {
   if (!code) return null
@@ -24,7 +25,6 @@ async function getReservationFromCode(code?: string) {
 
 // Hóspede logado sem link de reserva
 function NoAccessCode() {
-  const whatsapp = process.env.SOMAR_WHATSAPP?.replace(/\D/g, '')
   const text = encodeURIComponent('Olá! Preciso de ajuda com meu acesso ao Anfitrião Management.')
 
   return (
@@ -38,20 +38,16 @@ function NoAccessCode() {
       <p className="text-white/50 text-sm max-w-xs leading-relaxed">
         Você precisa de um link de acesso enviado pelo seu anfitrião.
       </p>
-      {whatsapp && (
-        <>
-          <p className="text-white/40 text-sm mt-4">Dúvidas? Entre em contato pelo WhatsApp.</p>
-          <a
-            href={`https://wa.me/${whatsapp}?text=${text}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-          >
-            <MessageCircle size={18} />
-            Falar no WhatsApp
-          </a>
-        </>
-      )}
+      <p className="text-white/40 text-sm mt-4">Dúvidas? Entre em contato pelo WhatsApp.</p>
+      <a
+        href={`${SOMAR_WHATSAPP_URL}?text=${text}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+      >
+        <MessageCircle size={18} />
+        Falar no WhatsApp
+      </a>
     </div>
   )
 }

@@ -14,6 +14,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
 import { Logo } from '@/components/ui/Logo'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
+import { AuthBrand, AuthFooter } from '@/components/auth/AuthBrand'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -136,9 +137,7 @@ export default function LoginPage() {
         </div>
 
         {/* Rodapé */}
-        <p className="relative text-white/20 text-xs">
-          © 2025 Anfitrião Management · Powered by Somar Soluções Digitais
-        </p>
+        <AuthFooter dark className="relative !text-left" />
       </div>
 
       {/* ── PAINEL DIREITO (formulário) ── */}
@@ -146,9 +145,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
 
           {/* Logo mobile */}
-          <div className="lg:hidden flex justify-center mb-8">
-            <Logo variant="light" size="md" />
-          </div>
+          <AuthBrand className="lg:hidden" />
 
           {/* Heading */}
           <div className="mb-8">
@@ -241,6 +238,8 @@ export default function LoginPage() {
               Cadastre-se
             </Link>
           </p>
+
+          <AuthFooter className="mt-10 lg:hidden" />
         </div>
       </div>
     </div>
