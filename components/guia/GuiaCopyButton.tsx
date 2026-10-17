@@ -15,11 +15,13 @@ export function GuiaCopyButton({
   label,
   toast,
   className,
+  children,
 }: {
   text: string
-  label: string
+  label?: string
   toast: string
   className?: string
+  children?: React.ReactNode
 }) {
   const [msg, setMsg] = useState<string | null>(null)
 
@@ -40,15 +42,19 @@ export function GuiaCopyButton({
   return (
     <>
       <button type="button" onClick={copy} className={className}>
-        <CopyIcon />
-        {label}
+        {children ?? (
+          <>
+            <CopyIcon />
+            {label}
+          </>
+        )}
       </button>
       <div
         role="status"
         className={`fixed left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#252525] px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 pointer-events-none ${
           msg ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
-        style={{ bottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+        style={{ bottom: 'calc(92px + env(safe-area-inset-bottom, 0px))' }}
       >
         {msg}
       </div>
