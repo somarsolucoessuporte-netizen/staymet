@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2 } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2, Pencil, Minimize2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
 import { CategoryPicker } from '@/components/anfitriao/CategoryPicker'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
@@ -169,6 +169,8 @@ function PartnerRow({
   const isOrder = isOrderCategory(category)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // modo compacto: linha resumida; abre o editor completo ao tocar (botão novo já nasce aberto)
+  const [expanded, setExpanded] = useState(isNew)
   const [busy, startTransition] = useTransition()
   const { toast } = useToast()
   const rowRef = useRef<HTMLDivElement>(null)
@@ -250,6 +252,29 @@ function PartnerRow({
 
   const iconBtn =
     'flex h-9 w-9 items-center justify-center rounded-lg text-[#475569] transition hover:bg-gray-100 active:scale-95 disabled:pointer-events-none disabled:opacity-30'
+
+  if (!expanded && partner) {
+    const digits = whatsapp.replace(/\D/g, '')
+    const summary = digits
+      ? `WhatsApp ${formatWhatsappBR(digits)}`
+      : link
+        ? link.replace(/^https?:\/\//, '').split('/')[0]
+        : partner.phone ?? 'Sem WhatsApp nem link'
+    return (
+      <div className={cn('flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-2.5 shadow-sm', !active && 'opacity-50')}>
+        <CategoryIcon kind={category} size={40} />
+        <button type="button" onClick={() => setExpanded(true)} className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-sm font-semibold text-[#0F172A]">{name}</span>
+          <span className="block truncate text-[11px] text-[#64748B]">{summary}</span>
+        </button>
+        {!active && <span className="shrink-0 rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600">Oculto</span>}
+        <Switch checked={active} disabled={busy} onChange={(v) => act(() => togglePartnerActive(propertyId, partner.id, v))} />
+        <button type="button" onClick={() => setExpanded(true)} aria-label={`Editar ${name}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[#475569] hover:bg-gray-100">
+          <Pencil className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -384,6 +409,16 @@ function PartnerRow({
 
         <div className="ml-auto flex items-center">
           <StatusIcon status={status} />
+          {!isNew && (
+            <button
+              type="button"
+              onClick={() => { save(); setExpanded(false) }}
+              aria-label="Recolher"
+              className={iconBtn}
+            >
+              <Minimize2 className="h-4 w-4" />
+            </button>
+          )}
           {isNew ? (
             <button type="button" onClick={onDiscard} aria-label="Descartar" className={iconBtn}>
               <Trash2 className="h-4 w-4" />

@@ -36,6 +36,8 @@ export type GuiaCardData = {
   sheet?: GuiaSheetData
   /** card que navega para outra página (ex.: caixinha de sugestões) em vez de abrir sheet */
   href?: string
+  /** abre o href em nova aba (ex.: Google Maps) */
+  external?: boolean
 }
 
 const CARD =
@@ -75,7 +77,14 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
       </>
     )
     return c.href ? (
-      <a key={c.id} href={c.href} className={cls}>{body}</a>
+      <a
+        key={c.id}
+        href={c.href}
+        className={cls}
+        {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {body}
+      </a>
     ) : (
       <button key={c.id} type="button" onClick={() => setOpenId(c.id)} className={cls}>{body}</button>
     )

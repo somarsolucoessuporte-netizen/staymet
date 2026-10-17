@@ -4,6 +4,9 @@ import { refresh, revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { getCurrentDbUser, canEditGuia } from '@/lib/guia-access'
+import { ensurePublicBucket } from '@/lib/supabase/admin'
+import { COVER_BUCKET, COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
+import { slugify } from '@/lib/slug'
 import { PARTNER_CATEGORIES, PARTNER_CATEGORY_VALUES } from '@/lib/guia'
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -79,6 +82,7 @@ export async function getGuiaConfig(propertyId: string) {
       select: {
         id: true, name: true,
         wifiName: true, wifiPassword: true, deliveryInstructions: true, suggestionsEnabled: true,
+        slug: true, locationUrl: true, coverImageUrl: true, city: true,
         partners: {
           include: { partner: true },
           orderBy: [{ partner: { sortOrder: 'asc' } }, { partner: { name: 'asc' } }],
@@ -122,6 +126,81 @@ export async function updatePropertyGuia(
     return { ok: true }
   } catch (e) {
     return fail(e)
+  }
+}
+
+// ─── Link do guia (slug), foto de capa e localização ───
+
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/** Define o link amigável /g/{slug}. Vazio remove o slug (vale o link /guia/{id}). */
+export async function updateGuiaSlug(propertyId: string, raw: string): Promise<ActionResult> {
+  try {
+    await assertAccess(propertyId)
+    const slug = slugify(raw)
+    if (!slug) {
+      await prisma.property.update({ where: { id: propertyId }, data: { slug: null } })
+      refreshGuia(propertyId)
+      return { ok: true }
+    }
+    if (slug.length < 3 || slug.length > 60 || !SLUG_RE.test(slug)) {
+      return { ok: false, error: 'Use de 3 a 60 letras, números ou hífens.' }
+    }
+    const taken = await prisma.property.findFirst({ where: { slug, NOT: { id: propertyId } }, select: { id: true } })
+    if (taken) return { ok: false, error: 'Este link já está em uso por outro imóvel. Tente outro.' }
+    await prisma.property.update({ where: { id: propertyId }, data: { slug } })
+    refreshGuia(propertyId)
+    return { ok: true }
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+/** Foto de capa e localização (link do Google Maps) do guia */
+export async function updateGuiaPlace(
+  propertyId: string,
+  data: { coverImageUrl?: string; locationUrl?: string },
+): Promise<ActionResult> {
+  try {
+    await assertAccess(propertyId)
+    const patch: { coverImageUrl?: string | null; locationUrl?: string | null } = {}
+    if (data.coverImageUrl !== undefined) {
+      const url = normalizeUrl(data.coverImageUrl.trim() || null)
+      if (url === undefined) return { ok: false, error: 'Link da foto inválido.' }
+      patch.coverImageUrl = url
+    }
+    if (data.locationUrl !== undefined) {
+      const url = normalizeUrl(data.locationUrl.trim() || null)
+      if (url === undefined) return { ok: false, error: 'Link do mapa inválido.' }
+      patch.locationUrl = url
+    }
+    await prisma.property.update({ where: { id: propertyId }, data: patch })
+    refreshGuia(propertyId)
+    return { ok: true }
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+/** URL assinada para o anfitrião enviar a foto de capa direto ao Storage */
+export async function createGuiaCoverUploadUrl(
+  propertyId: string,
+  file: { type: string; size: number },
+): Promise<{ ok: true; path: string; token: string; publicUrl: string } | { ok: false; error: string }> {
+  try {
+    await assertAccess(propertyId)
+    if (!COVER_MIME_TYPES.includes(file.type)) return { ok: false, error: 'Use uma imagem JPG, PNG ou WEBP.' }
+    if (file.size > COVER_MAX_BYTES) return { ok: false, error: 'A imagem deve ter no máximo 5MB.' }
+    const admin = await ensurePublicBucket(COVER_BUCKET, { fileSizeLimit: COVER_MAX_BYTES, allowedMimeTypes: COVER_MIME_TYPES })
+    const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }[file.type]
+    const path = `capas/${propertyId}-${Date.now()}.${ext}`
+    const { data, error } = await admin.storage.from(COVER_BUCKET).createSignedUploadUrl(path)
+    if (error || !data) return { ok: false, error: 'Não foi possível preparar o upload.' }
+    const { data: pub } = admin.storage.from(COVER_BUCKET).getPublicUrl(path)
+    return { ok: true, path: data.path, token: data.token, publicUrl: pub.publicUrl }
+  } catch (e) {
+    const r = fail(e)
+    return { ok: false, error: r.ok ? '' : r.error }
   }
 }
 

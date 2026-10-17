@@ -1,7 +1,7 @@
 import {
   ShoppingCart, Bread, ForkKnife, Pizza, Hamburger, Moped, HandWaving, Key, Flame, Broom, Wrench, TShirt,
   Jeep, Waves, Wind, MapTrifold, Bus, Taxi, Airplane, Pill, FirstAid, DotsThreeCircle,
-  WifiHigh, Package, Siren, Lightbulb, Ambulance, FireTruck, ShieldCheck,
+  WifiHigh, Package, Siren, Lightbulb, Ambulance, FireTruck, ShieldCheck, MapPin,
 } from '@phosphor-icons/react/ssr'
 import type { Icon, IconWeight } from '@phosphor-icons/react'
 import { getCategoryMeta } from '@/lib/guia'
@@ -25,6 +25,7 @@ const SPECIAL: Record<string, Style> = {
   ENTREGADOR: { Icon: Package,   color: '#D97706', bg: '#FFFBEB', bg2: '#FEF3C7' },
   EMERGENCIA: { Icon: Siren,     ...RED },
   SUGESTOES:  { Icon: Lightbulb, ...BLUE },
+  LOCALIZACAO: { Icon: MapPin,   color: '#7C3AED', bg: '#F5F3FF', bg2: '#EDE9FE' },
   SAMU:       { Icon: Ambulance,   ...RED },
   BOMBEIROS:  { Icon: FireTruck,   ...RED },
   POLICIA:    { Icon: ShieldCheck, color: '#1E40AF', bg: '#EFF6FF', bg2: '#DBEAFE' },

@@ -25,6 +25,7 @@ async function getGuia(id: string) {
       wifiPassword: true,
       deliveryInstructions: true,
       suggestionsEnabled: true,
+      locationUrl: true,
       partners: {
         where: { partner: { active: true } },
         select: {
@@ -156,6 +157,12 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           id: 'entregador', title: 'Entregador', caption: 'Endereço para entregas', group: 'principal' as const,
           icon: <CategoryIcon kind="ENTREGADOR" />, sheetTitle: 'Endereço para entregas',
           sheet: { type: 'entregador' as const, text: guia.deliveryInstructions },
+        }]
+      : []),
+    ...(guia.locationUrl
+      ? [{
+          id: 'localizacao', title: 'Como chegar', caption: 'Abrir no mapa', group: 'principal' as const,
+          icon: <CategoryIcon kind="LOCALIZACAO" />, sheetTitle: '', href: guia.locationUrl, external: true,
         }]
       : []),
     {
