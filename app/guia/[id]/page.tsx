@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { Home, Wifi, Compass, Siren } from 'lucide-react'
+import { Home, Wifi, Phone, Siren } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getCategoryMeta, PARTNER_CATEGORIES } from '@/lib/guia'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
+import { GuiaEmergencySheet } from '@/components/guia/GuiaEmergencySheet'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Guia público do hóspede: um link por imóvel, sem login.
@@ -71,10 +72,9 @@ const EMERGENCIA = [
   { label: '👮 Polícia Militar', num: '190' },
 ]
 
-// Visual compartilhado dos cards da grade
+// Card padrão da grade: ~76px, só ícone + nome
 const CARD =
-  'flex h-full w-full flex-col items-center gap-2 rounded-[1.75rem] bg-gradient-to-b from-white to-[#F1F5FF] px-3 pb-4 pt-5 text-center ' +
-  'shadow-[0_8px_24px_-8px_rgba(26,86,219,0.25)] ring-1 ring-[#1A56DB]/[0.06] transition active:scale-95'
+  'flex h-[76px] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-[#E2E8F0] bg-white px-2 shadow-sm transition active:scale-95'
 
 export default async function GuiaPublicoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -92,149 +92,121 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const anfitriao = items.find((i) => i.category === 'ANFITRIAO' && i.whatsappUrl)
 
   const hasWifi = !!(guia.wifiName || guia.wifiPassword)
-  const hasContatos = hasWifi || contatos.length > 0 || !!guia.deliveryInstructions
+
+  const emergencyLines = [
+    ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}` })),
+    ...(anfitriao?.whatsappUrl
+      ? [{ label: '👋 Anfitrião', value: 'WhatsApp', href: anfitriao.whatsappUrl, external: true }]
+      : []),
+  ]
 
   const nav = [
-    { href: '#topo', label: 'Início', Icon: Home, show: true },
-    { href: '#wifi', label: 'Wi-Fi', Icon: Wifi, show: hasWifi },
-    { href: '#dicas', label: 'Dicas', Icon: Compass, show: dicas.length > 0 },
-    { href: '#emergencia', label: 'Emergência', Icon: Siren, show: true },
-  ].filter((n) => n.show)
+    { href: '#topo', label: 'Início', Icon: Home },
+    ...(hasWifi ? [{ href: '#wifi', label: 'Wi-Fi', Icon: Wifi }] : []),
+    { href: '#contatos', label: 'Contatos', Icon: Phone },
+    { href: '#emergencia', label: 'Emergência', Icon: Siren },
+  ]
 
   return (
     <div id="topo" className="font-display min-h-screen bg-[#F8FAFC] text-[#0F172A]">
       <GuiaSplash id={id} propertyName={guia.name} />
-      <div className="mx-auto max-w-md pb-[calc(96px+env(safe-area-inset-bottom,0px))]">
 
-        {/* CABEÇALHO */}
-        <header className="rounded-b-[2.5rem] bg-[#0F172A] px-6 pb-10 pt-6 text-center text-white">
-          <div className="flex items-center justify-center gap-2.5">
-            <Image src="/icone.png" alt="" width={36} height={36} className="rounded-lg object-contain" priority />
-            <div className="text-left leading-none">
-              <p className="text-lg font-extrabold tracking-tight">Anfitrião</p>
-              <p className="mt-0.5 text-[0.55rem] font-semibold tracking-[0.35em] text-white/60">MANAGEMENT</p>
-            </div>
+      <div className="mx-auto max-w-md pb-[calc(76px+env(safe-area-inset-bottom,0px))]">
+
+        {/* CABEÇALHO — máx. 72px */}
+        <header className="relative flex h-[72px] items-center justify-center rounded-t-2xl bg-gradient-to-r from-[#0F3A7A] to-[#1A56DB] px-12 pb-2 text-white">
+          <Image src="/icone.png" alt="" width={28} height={28} priority className="absolute left-3 top-1/2 -mt-1 -translate-y-1/2 rounded-md" />
+          <div className="min-w-0 text-center leading-tight">
+            <h1 className="text-lg font-bold">Bem-vindo(a)!</h1>
+            <p className="flex items-center justify-center gap-2 text-xs text-white/80">
+              <span className="h-px w-3 shrink-0 bg-white/50" />
+              <span className="truncate">{guia.name}</span>
+              <span className="h-px w-3 shrink-0 bg-white/50" />
+            </p>
           </div>
-
-          <h1 className="mt-8 text-[2.1rem] font-extrabold leading-tight">Bem-vindo(a)!</h1>
-          <p className="mt-2 flex items-center justify-center gap-3 text-sm font-medium text-white/70">
-            <span className="h-px w-6 bg-white/40" />
-            <span className="max-w-[16rem] truncate">{guia.name}</span>
-            <span className="h-px w-6 bg-white/40" />
-          </p>
-          {guia.city && (
-            <p className="mt-1.5 text-xs text-white/40">📍 {guia.city}{guia.state ? `, ${guia.state}` : ''}</p>
-          )}
         </header>
 
-        {/* FOTO */}
-        <div className="relative mx-4 -mt-5 h-52 overflow-hidden rounded-b-3xl rounded-t-[3rem] bg-gradient-to-br from-[#1A56DB] to-[#0F172A] shadow-[0_12px_32px_-12px_rgba(15,23,42,0.45)]">
+        {/* FOTO — 140px, de ponta a ponta */}
+        <div className="relative -mt-2 h-[140px] overflow-hidden rounded-t-xl bg-gradient-to-br from-[#1A56DB] to-[#0F3A7A]">
           {guia.coverImageUrl && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={guia.coverImageUrl} alt={guia.name} className="absolute inset-0 h-full w-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
             </>
           )}
-          <p className="absolute inset-x-0 bottom-5 text-center text-2xl font-extrabold italic text-white [text-shadow:0_2px_10px_rgba(0,0,0,0.45)]">
+          <p className="absolute inset-x-0 bottom-2.5 text-center text-lg font-bold italic text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.5)]">
             Aproveite sua estadia!
           </p>
         </div>
 
-        <main className="mt-8 space-y-8 px-4">
-
-          {/* CONTATOS ÚTEIS */}
-          {hasContatos && (
-            <section>
-              <SectionTitle>Contatos úteis</SectionTitle>
-              <div className="grid grid-cols-2 gap-3.5">
-                {hasWifi && (
-                  <div id="wifi" className="scroll-mt-6">
-                    {guia.wifiPassword ? (
-                      <GuiaCopyButton text={guia.wifiPassword} toast="✅ Senha do Wi-Fi copiada!" className={CARD}>
-                        <CardBody emoji="📶" iconBg="#E8F1FD" title={guia.wifiName || 'Wi-Fi'} hint="Toque para copiar a senha" />
-                      </GuiaCopyButton>
-                    ) : (
-                      <div className={CARD}>
-                        <CardBody emoji="📶" iconBg="#E8F1FD" title={guia.wifiName ?? 'Wi-Fi'} hint="Rede aberta" />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {contatos.map((item) => (
-                  <PartnerCard key={item.id} item={item} preferMap={false} />
-                ))}
-
-                {guia.deliveryInstructions && (
-                  <GuiaCopyButton
-                    text={guia.deliveryInstructions}
-                    toast="✅ Texto copiado! Cole no chat do entregador"
-                    className={CARD}
-                  >
-                    <CardBody emoji="📦" iconBg="#FFF4E6" title="Entregador" hint="Copiar como chegar" />
-                  </GuiaCopyButton>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* DICAS & ROTEIROS */}
-          {dicas.length > 0 && (
-            <section id="dicas" className="scroll-mt-6">
-              <SectionTitle>Dicas & Roteiros</SectionTitle>
-              <div className="grid grid-cols-2 gap-3.5">
-                {dicas.map((item) => (
-                  <PartnerCard key={item.id} item={item} preferMap />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* EMERGÊNCIA */}
-          <section id="emergencia" className="scroll-mt-6">
-            <SectionTitle>Emergência</SectionTitle>
-            <div className="grid grid-cols-2 gap-2 rounded-3xl bg-[#FEF2F2] p-3 ring-1 ring-[#DC2626]/10">
-              {EMERGENCIA.map((e) => (
-                <a
-                  key={e.num}
-                  href={`tel:${e.num}`}
-                  className="flex items-center justify-between gap-2 rounded-2xl bg-white/70 px-3 py-2.5 transition active:scale-95"
+        {/* GRADE ÚNICA: Wi-Fi → contatos → emergência → dicas */}
+        <main id="contatos" className="grid scroll-mt-2 grid-cols-2 gap-2.5 px-3 pt-3">
+          {hasWifi && (
+            <div id="wifi" className="scroll-mt-20">
+              {guia.wifiPassword ? (
+                <GuiaCopyButton
+                  text={guia.wifiPassword}
+                  toast={`✅ Senha copiada: ${guia.wifiName || 'Wi-Fi'}`}
+                  className={CARD}
                 >
-                  <span className="truncate text-[0.8rem] font-semibold">{e.label}</span>
-                  <span className="text-base font-extrabold tabular-nums text-[#DC2626]">{e.num}</span>
-                </a>
-              ))}
-              {anfitriao?.whatsappUrl && (
-                <a
-                  href={anfitriao.whatsappUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-2 rounded-2xl bg-white/70 px-3 py-2.5 transition active:scale-95"
-                >
-                  <span className="truncate text-[0.8rem] font-semibold">👋 Anfitrião</span>
-                  <span className="text-xs font-extrabold text-[#DC2626]">WhatsApp</span>
-                </a>
+                  <CardBody emoji="📶" title="Wi-Fi" />
+                </GuiaCopyButton>
+              ) : (
+                <div className={CARD}>
+                  <CardBody emoji="📶" title={guia.wifiName ?? 'Wi-Fi'} />
+                </div>
               )}
             </div>
-          </section>
+          )}
+
+          {contatos.map((item) => (
+            <PartnerCard key={item.id} item={item} preferMap={false} />
+          ))}
+
+          {guia.deliveryInstructions && (
+            <GuiaCopyButton
+              text={guia.deliveryInstructions}
+              toast="✅ Texto copiado! Cole no chat do entregador"
+              className={CARD}
+            >
+              <CardBody emoji="📦" title="Entregador" />
+            </GuiaCopyButton>
+          )}
+
+          <a href="#emergencia" className={`${CARD} border-red-200 bg-red-50`}>
+            <CardBody emoji="🚨" title="Emergência" titleClass="text-[#B91C1C]" />
+          </a>
+
+          {dicas.length > 0 && (
+            <>
+              <p className="col-span-2 pl-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
+                Dicas & Roteiros
+              </p>
+              {dicas.map((item) => (
+                <PartnerCard key={item.id} item={item} preferMap />
+              ))}
+            </>
+          )}
         </main>
 
-        <SomarFooter className="mt-6" />
+        <SomarFooter className="mt-3 py-3" />
       </div>
 
-      {/* NAVEGAÇÃO INFERIOR */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="mx-auto mb-3 flex w-[calc(100%-2rem)] max-w-md items-center justify-around rounded-3xl bg-white/90 px-2 py-2 shadow-[0_8px_30px_-6px_rgba(15,23,42,0.25)] ring-1 ring-black/5 backdrop-blur-md">
+      <GuiaEmergencySheet lines={emergencyLines} />
+
+      {/* BARRA INFERIOR — fixa, 60px */}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E2E8F0] bg-white pb-[env(safe-area-inset-bottom,0px)]">
+        <div className="mx-auto flex h-[60px] max-w-md items-stretch">
           {nav.map(({ href, label, Icon }) => (
             <a
               key={href}
               href={href}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-1.5 text-[0.65rem] font-semibold transition active:scale-95 ${
-                href === '#emergencia' ? 'text-[#DC2626]' : 'text-[#0F172A]/60 active:text-[#1A56DB]'
+              className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium active:scale-95 ${
+                href === '#emergencia' ? 'text-[#DC2626]' : 'text-[#475569]'
               }`}
             >
-              <Icon className="h-5 w-5" />
+              <Icon size={22} />
               {label}
             </a>
           ))}
@@ -244,30 +216,11 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="mb-3.5 flex items-center gap-2 pl-1 text-base font-extrabold text-[#0F172A]">
-      <span className="h-4 w-1 rounded-full bg-[#1A56DB]" />
-      {children}
-    </h2>
-  )
-}
-
-function CardBody({ emoji, iconBg, title, hint, description }: {
-  emoji: string
-  iconBg: string
-  title: string
-  hint?: string
-  description?: string | null
-}) {
+function CardBody({ emoji, title, titleClass }: { emoji: string; title: string; titleClass?: string }) {
   return (
     <>
-      <span className="flex h-16 w-16 items-center justify-center rounded-[1.25rem] text-4xl" style={{ background: iconBg }}>
-        {emoji}
-      </span>
-      <span className="line-clamp-2 text-[0.9rem] font-bold leading-tight text-[#0F172A]">{title}</span>
-      {description && <span className="line-clamp-2 text-[0.7rem] leading-snug text-[#64748B]">{description}</span>}
-      {hint && <span className="mt-auto text-[0.68rem] font-medium text-[#94A3B8]">{hint}</span>}
+      <span className="text-3xl leading-none">{emoji}</span>
+      <span className={`w-full truncate text-center text-[13px] font-semibold text-[#0F172A] ${titleClass ?? ''}`}>{title}</span>
     </>
   )
 }
@@ -275,20 +228,13 @@ function CardBody({ emoji, iconBg, title, hint, description }: {
 function PartnerCard({ item, preferMap }: { item: Item; preferMap: boolean }) {
   const action = actionFor(item, preferMap)
   const meta = getCategoryMeta(item.category)
-  const body = (
-    <CardBody
-      emoji={meta?.emoji ?? '📌'}
-      iconBg={meta?.iconBg ?? '#F3F0FD'}
-      title={item.name}
-      description={item.description}
-      hint={action?.hint}
-    />
-  )
+  const body = <CardBody emoji={meta?.emoji ?? '📌'} title={item.name} />
   return action ? (
     <a
       href={action.href}
       target={action.href.startsWith('tel:') ? undefined : '_blank'}
       rel="noopener noreferrer"
+      aria-label={`${item.name} — ${action.hint}`}
       className={CARD}
     >
       {body}
