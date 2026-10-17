@@ -1,13 +1,13 @@
 import {
   WifiHigh, HandWaving, ShoppingCart, ForkKnife, Pizza, UmbrellaSimple, MapTrifold,
-  Bus, Airplane, Package, Siren, MapPin,
+  Bus, Airplane, Package, Siren, MapPin, Lightbulb,
 } from '@phosphor-icons/react/ssr'
 import type { Icon } from '@phosphor-icons/react'
 
 // Ícones do guia público do hóspede: Phosphor duotone, um estilo único por categoria
 
 export type GuiaIconKind =
-  | 'WIFI' | 'ENTREGADOR' | 'EMERGENCIA'
+  | 'WIFI' | 'ENTREGADOR' | 'EMERGENCIA' | 'SUGESTOES'
   | 'ANFITRIAO' | 'MERCADO' | 'RESTAURANTE' | 'DELIVERY' | 'PASSEIO' | 'TRANSPORTE' | 'OUTRO'
 
 type Style = { Icon: Icon; color: string; from: string; to: string }
@@ -26,6 +26,7 @@ const STYLES: Record<GuiaIconKind, Style> = {
   ENTREGADOR:  { Icon: Package,        color: '#D97706', from: '#FFFBEB', to: '#FEF3C7' },
   EMERGENCIA:  { Icon: Siren,          color: '#DC2626', from: '#FEF2F2', to: '#FEE2E2' },
   OUTRO:       { Icon: MapPin,         ...BLUE },
+  SUGESTOES:   { Icon: Lightbulb,      ...BLUE },
 }
 
 /** Estilo do ícone, com variações pelo conteúdo do botão (rota no Maps, aeroporto) */

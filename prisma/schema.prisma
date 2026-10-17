@@ -77,7 +77,9 @@ model User {
   tasks             Task[]         @relation("TaskAssignee")
   createdTasks      Task[]         @relation("TaskCreator")
   requests          GuestRequest[]
-  occurrences       Occurrence[]
+  occurrences         Occurrence[]      @relation("OccurrenceReporter")
+  assignedOccurrences Occurrence[]      @relation("OccurrenceAssignee")
+  occurrenceEvents    OccurrenceEvent[]
   notifications     Notification[]
   checkIns          Reservation[]  @relation("CheckedInBy")
   checkOuts         Reservation[]  @relation("CheckedOutBy")
@@ -170,6 +172,7 @@ model Reservation {
   requests    GuestRequest[]
   inspections Inspection[]
   magicLinks  MagicLink[]
+  occurrences Occurrence[]
 }
 
 model Task {
@@ -208,10 +211,54 @@ model Occurrence {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
-  propertyId   String
-  property     Property @relation(fields: [propertyId], references: [id])
-  reportedById String
-  reportedBy   User     @relation(fields: [reportedById], references: [id])
+  // origem: HOSPEDE | PRESTADOR | ANFITRIAO | GESTOR | PROPRIETARIO | ADMINISTRADOR | PAINEL (legado)
+  source          String    @default("PAINEL")
+  // categoria operacional (ver lib/occurrences.ts) ou SUGESTAO (caixinha do hóspede)
+  category        String    @default("OPERACIONAL")
+  reporterName    String?
+  reporterContact String?
+  archivedAt      DateTime?
+
+  propertyId      String
+  property        Property     @relation(fields: [propertyId], references: [id])
+  reportedById    String?
+  reportedBy      User?        @relation("OccurrenceReporter", fields: [reportedById], references: [id])
+  assignedToId    String?
+  assignedTo      User?        @relation("OccurrenceAssignee", fields: [assignedToId], references: [id])
+  reservationId   String?
+  reservation     Reservation? @relation(fields: [reservationId], references: [id])
+  // sugestão de origem quando a ocorrência foi criada por "Converter em ocorrência"
+  convertedFromId String?
+  convertedFrom   Occurrence?  @relation("OccurrenceConversion", fields: [convertedFromId], references: [id])
+  conversions     Occurrence[] @relation("OccurrenceConversion")
+
+  events OccurrenceEvent[]
+
+  @@index([propertyId])
+  @@index([category])
+  @@index([source])
+  @@index([status])
+  @@index([archivedAt])
+  @@index([reportedById, createdAt])
+}
+
+/// Linha do tempo da ocorrência: toda ação grava um evento (quem, de→para, quando)
+model OccurrenceEvent {
+  id           String   @id @default(cuid())
+  // CRIADA | STATUS | PRIORIDADE | ATRIBUIDA | COMENTARIO | RESOLVIDA | ARQUIVADA | REABERTA | EDITADA | CONVERTIDA
+  type         String
+  fromValue    String?
+  toValue      String?
+  message      String?
+  actorLabel   String
+  createdAt    DateTime @default(now())
+
+  occurrenceId String
+  occurrence   Occurrence @relation(fields: [occurrenceId], references: [id], onDelete: Cascade)
+  actorId      String?
+  actor        User?      @relation(fields: [actorId], references: [id])
+
+  @@index([occurrenceId, createdAt])
 }
 
 model Inspection {

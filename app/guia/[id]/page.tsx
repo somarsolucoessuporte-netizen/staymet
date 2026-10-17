@@ -161,6 +161,10 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
       icon: <GuiaIcon kind="EMERGENCIA" />, sheetTitle: '🚨 Emergência',
       sheet: { type: 'emergencia', lines: emergencyLines },
     },
+    {
+      id: 'sugestoes', title: 'Caixinha de sugestões', caption: 'Sua opinião importa', group: 'principal',
+      icon: <GuiaIcon kind="SUGESTOES" />, sheetTitle: '', href: `/guia/${id}/sugestoes`,
+    },
     ...dicas.map((i) => partnerCard(i, guia)),
   ]
 

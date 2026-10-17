@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Lightbulb, AlertTriangle, LayoutGrid, ChevronRight, Building2 } from 'lucide-react'
 import { getCurrentDbUser } from '@/lib/guia-access'
 import { getAnfitriaoProperties } from '@/lib/anfitriao-properties'
-import { getOccurrenceSummary } from '@/lib/occurrence-compat'
+import { getOccurrenceSummary } from '@/lib/occurrence-summary'
 import { getRequestOrigin } from '@/lib/request-origin'
 import { PropertyGuideCard } from '@/components/anfitriao/PropertyGuideCard'
 import { OriginBadge } from '@/components/shared/OriginBadge'
@@ -26,6 +26,8 @@ function timeAgo(date: Date) {
 }
 
 const STATUS_LABEL: Record<string, string> = { ABERTA: 'Aberta', EM_ANDAMENTO: 'Em andamento' }
+const statusText = (o: { category: string; status: string }) =>
+  o.category === 'SUGESTAO' ? 'Nova' : STATUS_LABEL[o.status] ?? o.status
 
 export default async function AnfitriaoDashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
@@ -33,10 +35,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
   if (!dbUser) return null
 
   const properties = await getAnfitriaoProperties(dbUser)
-  const [summary, origin] = await Promise.all([
-    getOccurrenceSummary(properties.map((p) => p.id)),
-    getRequestOrigin(),
-  ])
+  const [summary, origin] = await Promise.all([getOccurrenceSummary(dbUser), getRequestOrigin()])
   const activeButtons = properties.reduce((n, p) => n + p.activeButtons, 0)
 
   const firstName = capitalize(dbUser.name.trim().split(' ')[0] ?? '')
@@ -46,7 +45,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
 
   const occurrencesHref = `/${locale}/anfitriao/ocorrencias`
   const stats = [
-    { label: 'Sugestões novas',     value: summary.hasCategories ? summary.suggestionsNew : '—', href: `${occurrencesHref}?aba=sugestoes`, Icon: Lightbulb,     iconCls: 'bg-amber-50 text-amber-600' },
+    { label: 'Sugestões novas',     value: summary.suggestionsNew, href: `${occurrencesHref}?aba=sugestoes`, Icon: Lightbulb,     iconCls: 'bg-amber-50 text-amber-600' },
     { label: 'Ocorrências abertas', value: summary.openOccurrences,                               href: occurrencesHref,                    Icon: AlertTriangle, iconCls: 'bg-red-50 text-red-600' },
     { label: 'Botões no guia',      value: activeButtons,                                          href: `/${locale}/anfitriao/guia`,        Icon: LayoutGrid,    iconCls: 'bg-blue-50 text-[#1A56DB]' },
   ]
@@ -118,7 +117,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
               {summary.attention.map((o) => (
                 <Link
                   key={o.id}
-                  href={`${occurrencesHref}#occ-${o.id}`}
+                  href={`${occurrencesHref}/${o.id}`}
                   className="flex items-center gap-3 px-4 py-3 transition active:bg-gray-50"
                 >
                   <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${o.category === 'SUGESTAO' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600'}`}>
@@ -130,7 +129,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
                       <OriginBadge source={o.source} name={o.reporterName} />
                       <span className="truncate">{o.propertyName}</span>
                       <span>· {timeAgo(o.createdAt)}</span>
-                      <span>· {STATUS_LABEL[o.status] ?? o.status}</span>
+                      <span>· {statusText(o)}</span>
                     </span>
                   </span>
                   <ChevronRight size={18} className="shrink-0 text-[#94A3B8]" />

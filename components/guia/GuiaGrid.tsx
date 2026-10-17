@@ -31,7 +31,10 @@ export type GuiaCardData = {
   tone?: 'red'
   icon: React.ReactNode
   sheetTitle: string
-  sheet: GuiaSheetData
+  /** conteúdo do bottom sheet; ausente quando o card tem href */
+  sheet?: GuiaSheetData
+  /** card que navega para outra página (ex.: caixinha de sugestões) em vez de abrir sheet */
+  href?: string
 }
 
 const CARD =
@@ -55,13 +58,10 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
   const principal = cards.filter((c) => c.group === 'principal')
   const dicas = cards.filter((c) => c.group === 'dicas')
 
-  const renderCard = (c: GuiaCardData) => (
-    <button
-      key={c.id}
-      type="button"
-      onClick={() => setOpenId(c.id)}
-      className={`${CARD} ${c.tone === 'red' ? 'border-red-200 bg-red-50' : 'border-[#E2E8F0]'}`}
-    >
+  const renderCard = (c: GuiaCardData) => {
+    const cls = `${CARD} ${c.tone === 'red' ? 'border-red-200 bg-red-50' : 'border-[#E2E8F0]'}`
+    const body = (
+      <>
       {c.icon}
       <span
         className={`mt-0.5 line-clamp-2 w-full break-words text-center text-[13px] font-semibold leading-tight ${
@@ -71,8 +71,14 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
         {c.title}
       </span>
       <span className="w-full truncate text-center text-[11px] text-[#64748B]">{c.caption}</span>
-    </button>
-  )
+      </>
+    )
+    return c.href ? (
+      <a key={c.id} href={c.href} className={cls}>{body}</a>
+    ) : (
+      <button key={c.id} type="button" onClick={() => setOpenId(c.id)} className={cls}>{body}</button>
+    )
+  }
 
   return (
     <>
@@ -89,7 +95,7 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
       </main>
 
       <GuiaSheet open={!!open} onClose={close} title={open?.sheetTitle ?? ''}>
-        {open && <SheetBody card={open} />}
+        {open?.sheet && <SheetBody card={open} sheet={open.sheet} />}
       </GuiaSheet>
     </>
   )
@@ -104,8 +110,7 @@ const secondaryBtn =
 const copyBtn =
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#F1F5FF] px-3 text-xs font-semibold text-[#1A56DB] active:scale-95'
 
-function SheetBody({ card }: { card: GuiaCardData }) {
-  const s = card.sheet
+function SheetBody({ card, sheet: s }: { card: GuiaCardData; sheet: GuiaSheetData }) {
   switch (s.type) {
     case 'wifi':
       return <WifiSheet network={s.network} password={s.password} />

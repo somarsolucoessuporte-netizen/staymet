@@ -347,29 +347,70 @@ async function main() {
     prisma.propertyPartner.create({ data: { propertyId: prop2.id, partnerId: partner1.id } }),
   ])
 
-  // Ocorrências
-  await Promise.all([
-    prisma.occurrence.create({
-      data: {
-        title: 'Torneira do banheiro pingando',
-        description: 'A torneira da pia do banheiro principal está com vazamento leve.',
-        priority: 'MEDIA',
-        status: 'ABERTA',
-        propertyId: prop1.id,
-        reportedById: anfitriao.id,
+  // Ocorrências — origens diferentes e histórico de eventos, para servirem de modelo
+  const h = (hours: number) => new Date(Date.now() - hours * 60 * 60 * 1000)
+  await prisma.occurrence.create({
+    data: {
+      title: 'Torneira do banheiro pingando',
+      description: 'A torneira da pia do banheiro principal está com vazamento leve. Notei durante a limpeza de saída.',
+      priority: 'MEDIA',
+      status: 'EM_ANDAMENTO',
+      category: 'HIDRAULICA',
+      source: 'PRESTADOR',
+      propertyId: prop1.id,
+      reportedById: prestador.id,
+      reporterName: prestador.name,
+      reporterContact: prestador.phone,
+      assignedToId: gestor.id,
+      createdAt: h(26),
+      events: {
+        create: [
+          { type: 'CRIADA', toValue: 'ABERTA', message: 'Hidráulica · prioridade média', actorId: prestador.id, actorLabel: `Prestador – ${prestador.name}`, createdAt: h(26) },
+          { type: 'ATRIBUIDA', fromValue: 'Ninguém', toValue: gestor.name, actorId: gestor.id, actorLabel: `Gestor – ${gestor.name}`, createdAt: h(25) },
+          { type: 'STATUS', fromValue: 'Aberta', toValue: 'Em andamento', actorId: gestor.id, actorLabel: `Gestor – ${gestor.name}`, createdAt: h(25) },
+          { type: 'COMENTARIO', message: 'Encanador agendado para amanhã às 9h.', actorId: gestor.id, actorLabel: `Gestor – ${gestor.name}`, createdAt: h(24) },
+        ],
       },
-    }),
-    prisma.occurrence.create({
-      data: {
-        title: 'Lâmpada queimada — quarto 2',
-        description: 'A lâmpada do quarto 2 queimou. Necessário substituir por LED.',
-        priority: 'BAIXA',
-        status: 'EM_ANDAMENTO',
-        propertyId: prop2.id,
-        reportedById: gestor.id,
+    },
+  })
+  await prisma.occurrence.create({
+    data: {
+      title: 'Lâmpada queimada — quarto 2',
+      description: 'A lâmpada do quarto 2 queimou. Necessário substituir por LED.',
+      priority: 'BAIXA',
+      status: 'ABERTA',
+      category: 'ELETRICA',
+      source: 'ANFITRIAO',
+      propertyId: prop1.id,
+      reportedById: anfitriao.id,
+      reporterName: anfitriao.name,
+      createdAt: h(5),
+      events: {
+        create: [
+          { type: 'CRIADA', toValue: 'ABERTA', message: 'Elétrica · prioridade baixa', actorId: anfitriao.id, actorLabel: `Anfitrião – ${anfitriao.name}`, createdAt: h(5) },
+          { type: 'PRIORIDADE', fromValue: 'Média', toValue: 'Baixa', actorId: gestor.id, actorLabel: `Gestor – ${gestor.name}`, createdAt: h(4) },
+        ],
       },
-    }),
-  ])
+    },
+  })
+  await prisma.occurrence.create({
+    data: {
+      title: 'Sugestão – Cozinha/utensílios',
+      description: 'A casa é linda! Faltou só uma cafeteira e uma forma de bolo na cozinha. Seria ótimo para quem fica vários dias.',
+      priority: 'BAIXA',
+      status: 'ABERTA',
+      category: 'SUGESTAO',
+      source: 'HOSPEDE',
+      propertyId: prop1.id,
+      reportedById: hospede.id,
+      reporterName: hospede.name,
+      reporterContact: hospede.email,
+      createdAt: h(2),
+      events: {
+        create: [{ type: 'CRIADA', toValue: 'Nova', message: 'Cozinha/utensílios', actorId: hospede.id, actorLabel: `Hóspede – ${hospede.name}`, createdAt: h(2) }],
+      },
+    },
+  })
 
   // Notificações
   await Promise.all([

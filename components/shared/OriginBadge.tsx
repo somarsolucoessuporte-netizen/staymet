@@ -11,10 +11,23 @@ const ORIGINS: Record<string, { emoji: string; label: string; cls: string }> = {
   PAINEL:        { emoji: '🗂', label: 'Painel',       cls: 'bg-gray-100 text-gray-600 ring-gray-200' },
 }
 
-export function OriginBadge({ source, name, className }: { source: string; name?: string | null; className?: string }) {
+export function OriginBadge({
+  source,
+  name,
+  prestadorKind,
+  className,
+}: {
+  source: string
+  name?: string | null
+  /** tipo da tarefa do prestador no imóvel: LIMPEZA → "Limpeza", MANUTENCAO → "Manutenção" */
+  prestadorKind?: string | null
+  className?: string
+}) {
   const o = ORIGINS[source] ?? ORIGINS.PAINEL
-  // Hóspede mostra o nome ("🧳 Hóspede Maria")
-  const label = source === 'HOSPEDE' && name ? `${o.label} ${name.split(' ')[0]}` : o.label
+  let label = o.label
+  if (source === 'HOSPEDE' && name) label = `${o.label} ${name.split(' ')[0]}`
+  if (source === 'PRESTADOR' && prestadorKind === 'LIMPEZA') label = 'Limpeza'
+  if (source === 'PRESTADOR' && prestadorKind === 'MANUTENCAO') label = 'Manutenção'
   return (
     <span className={cn('inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1', o.cls, className)}>
       <span aria-hidden>{o.emoji}</span>

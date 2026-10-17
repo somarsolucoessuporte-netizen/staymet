@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Building2, Users, AlertCircle, BarChart3, Settings, ExternalLink,
-  ChevronRight, Eye, SlidersHorizontal, Link2, BookOpen, MapPin,
+  ChevronRight, Eye, MessageSquareWarning, SlidersHorizontal, Link2, BookOpen, MapPin,
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getRequestOrigin } from '@/lib/request-origin'
@@ -61,6 +61,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
   const navItems = [
     { icon: Users,       title: 'Gestão de Usuários',  desc: 'Listar, criar e gerenciar usuários do sistema.', href: `/${locale}/admin/usuarios`,   iconCls: 'bg-blue-50 text-[#1A56DB]' },
     { icon: Building2,   title: 'Gestão de Imóveis',   desc: 'Visualizar todos os imóveis e seus status.',      href: `/${locale}/admin/imoveis`,    iconCls: 'bg-emerald-50 text-emerald-600' },
+    { icon: MessageSquareWarning, title: 'Ocorrências e sugestões', desc: 'Problemas da operação e a caixinha dos hóspedes.', href: `/${locale}/admin/ocorrencias`, iconCls: 'bg-red-50 text-red-600' },
     { icon: AlertCircle, title: 'Vistorias Pendentes', desc: 'Validar vistorias digitais de entrada/saída.',    href: `/${locale}/admin/vistorias`,  iconCls: 'bg-orange-50 text-orange-600' },
     // Página ainda não existe: fica desabilitado até ser criada
     { icon: BarChart3,   title: 'Relatórios',          desc: 'Relatórios de ocupação, receita e performance.',  href: null,                          iconCls: 'bg-purple-50 text-purple-600' },
