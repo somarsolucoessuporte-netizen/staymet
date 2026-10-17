@@ -2,15 +2,14 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { getCategoryMeta, PARTNER_CATEGORIES } from '@/lib/guia'
-import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
+import { getCategoryMeta, PARTNER_CATEGORIES, buildGuestMessage, isOrderCategory, withWhatsappText } from '@/lib/guia'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
-import { GuiaEmergencySheet } from '@/components/guia/GuiaEmergencySheet'
+import { GuiaGrid, type GuiaCardData } from '@/components/guia/GuiaGrid'
 import { GuiaIcon } from '@/components/guia/categoryIcon'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Guia público do hóspede: um link por imóvel, sem login.
-// O anfitrião configura tudo em /anfitriao/guia.
+// O anfitrião configura tudo em /anfitriao/guia. Cada botão abre um bottom sheet explicando o que faz.
 
 export const dynamic = 'force-dynamic'
 
@@ -31,7 +30,7 @@ async function getGuia(id: string) {
           partner: {
             select: {
               id: true, name: true, category: true, description: true,
-              phone: true, whatsappUrl: true, externalUrl: true, sortOrder: true,
+              phone: true, whatsappUrl: true, externalUrl: true, sortOrder: true, deliveryNote: true,
             },
           },
         },
@@ -54,27 +53,62 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-/** Para onde o botão leva. Dicas priorizam o mapa; contatos priorizam o WhatsApp. */
-function actionFor(item: Item, preferMap: boolean) {
-  const wa = item.whatsappUrl ? { href: item.whatsappUrl, hint: 'Chamar no WhatsApp', pin: '💬' } : null
-  const url = item.externalUrl
-    ? /maps|goo\.gl/i.test(item.externalUrl)
-      ? { href: item.externalUrl, hint: 'Ver rota no mapa', pin: '📍' }
-      : { href: item.externalUrl, hint: 'Abrir site', pin: '🔗' }
-    : null
-  const tel = item.phone ? { href: `tel:${item.phone.replace(/[^\d+]/g, '')}`, hint: 'Ligar', pin: '📞' } : null
-  return (preferMap ? url ?? wa : wa ?? url) ?? tel
-}
-
 const EMERGENCIA = [
   { label: '🚑 SAMU', num: '192' },
   { label: '🔥 Bombeiros', num: '193' },
   { label: '👮 Polícia Militar', num: '190' },
 ]
 
-// Card padrão da grade: ícone + nome (até 2 linhas); cards da mesma linha com a mesma altura
-const CARD =
-  'flex h-full min-h-[104px] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#E2E8F0] bg-white px-2 py-2.5 shadow-sm transition active:scale-95'
+const isMaps = (url: string) => /maps|goo\.gl/i.test(url)
+
+/** Legenda de 1 linha no card: o que acontece ao tocar */
+function captionFor(item: Item, section: string) {
+  if (section === 'dicas') {
+    if (item.externalUrl) return isMaps(item.externalUrl) ? 'Ver rota' : 'Abrir site'
+    return item.whatsappUrl ? 'Chamar no WhatsApp' : item.phone ? 'Ligar' : 'Ver detalhes'
+  }
+  if (item.whatsappUrl) {
+    if (item.category === 'ANFITRIAO') return 'Falar com o anfitrião'
+    return isOrderCategory(item.category) ? 'Pedir pelo WhatsApp' : 'Chamar no WhatsApp'
+  }
+  if (item.phone) return 'Ligar'
+  if (item.externalUrl) return isMaps(item.externalUrl) ? 'Ver no mapa' : 'Abrir site'
+  return 'Ver detalhes'
+}
+
+function partnerCard(item: Item, guia: Guia): GuiaCardData {
+  const section = getCategoryMeta(item.category)?.section ?? 'contatos'
+  const icon = <GuiaIcon kind={item.category} item={item} />
+
+  if (section === 'dicas') {
+    return {
+      id: item.id, title: item.name, caption: captionFor(item, section), group: 'dicas', icon,
+      sheetTitle: getCategoryMeta(item.category)?.label ?? 'Dica',
+      sheet: {
+        type: 'dica', name: item.name, description: item.description,
+        externalUrl: item.externalUrl, whatsappUrl: item.whatsappUrl, phone: item.phone,
+      },
+    }
+  }
+
+  const order = isOrderCategory(item.category)
+  const message = buildGuestMessage(item.category, guia.name, item.deliveryNote || guia.deliveryInstructions)
+  return {
+    id: item.id, title: item.name, caption: captionFor(item, section), group: 'principal', icon,
+    sheetTitle: getCategoryMeta(item.category)?.label ?? 'Contato',
+    sheet: {
+      type: 'contato',
+      name: item.name,
+      description: item.description,
+      whatsappHref: item.whatsappUrl ? withWhatsappText(item.whatsappUrl, message) : null,
+      primaryLabel: item.category === 'ANFITRIAO' ? 'Falar com o anfitrião' : order ? 'Pedir pelo WhatsApp' : 'Chamar no WhatsApp',
+      message,
+      showMessage: order,
+      phone: item.phone,
+      externalUrl: item.externalUrl,
+    },
+  }
+}
 
 export default async function GuiaPublicoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -96,8 +130,38 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const emergencyLines = [
     ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}` })),
     ...(anfitriao?.whatsappUrl
-      ? [{ label: '👋 Anfitrião', value: 'WhatsApp', href: anfitriao.whatsappUrl, external: true }]
+      ? [{
+          label: '👋 Anfitrião',
+          value: 'WhatsApp',
+          href: withWhatsappText(anfitriao.whatsappUrl, buildGuestMessage('ANFITRIAO', guia.name)),
+          external: true,
+        }]
       : []),
+  ]
+
+  // Ordem da grade: Wi-Fi → contatos → entregador → emergência → dicas
+  const cards: GuiaCardData[] = [
+    ...(hasWifi
+      ? [{
+          id: 'wifi', title: 'Wi-Fi', caption: 'Rede e senha', group: 'principal' as const,
+          icon: <GuiaIcon kind="WIFI" />, sheetTitle: 'Wi-Fi da casa',
+          sheet: { type: 'wifi' as const, network: guia.wifiName, password: guia.wifiPassword },
+        }]
+      : []),
+    ...contatos.map((i) => partnerCard(i, guia)),
+    ...(guia.deliveryInstructions
+      ? [{
+          id: 'entregador', title: 'Entregador', caption: 'Endereço para entregas', group: 'principal' as const,
+          icon: <GuiaIcon kind="ENTREGADOR" />, sheetTitle: 'Endereço para entregas',
+          sheet: { type: 'entregador' as const, text: guia.deliveryInstructions },
+        }]
+      : []),
+    {
+      id: 'emergencia', title: 'Emergência', caption: 'Números úteis', group: 'principal', tone: 'red',
+      icon: <GuiaIcon kind="EMERGENCIA" />, sheetTitle: '🚨 Emergência',
+      sheet: { type: 'emergencia', lines: emergencyLines },
+    },
+    ...dicas.map((i) => partnerCard(i, guia)),
   ]
 
   return (
@@ -133,96 +197,10 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           </p>
         </div>
 
-        {/* GRADE ÚNICA: Wi-Fi → contatos → emergência → dicas */}
-        <main id="contatos" className="grid grid-cols-2 gap-2.5 px-3 pb-3 pt-3">
-          {hasWifi && (
-            <div id="wifi">
-              {guia.wifiPassword ? (
-                <GuiaCopyButton
-                  text={guia.wifiPassword}
-                  toast={`✅ Senha copiada: ${guia.wifiName || 'Wi-Fi'}`}
-                  className={CARD}
-                >
-                  <CardBody kind="WIFI" title="Wi-Fi" />
-                </GuiaCopyButton>
-              ) : (
-                <div className={CARD}>
-                  <CardBody kind="WIFI" title={guia.wifiName ?? 'Wi-Fi'} />
-                </div>
-              )}
-            </div>
-          )}
-
-          {contatos.map((item) => (
-            <PartnerCard key={item.id} item={item} preferMap={false} />
-          ))}
-
-          {guia.deliveryInstructions && (
-            <GuiaCopyButton
-              text={guia.deliveryInstructions}
-              toast="✅ Texto copiado! Cole no chat do entregador"
-              className={CARD}
-            >
-              <CardBody kind="ENTREGADOR" title="Entregador" />
-            </GuiaCopyButton>
-          )}
-
-          <a href="#emergencia" className={`${CARD} border-red-200 bg-red-50`}>
-            <CardBody kind="EMERGENCIA" title="Emergência" titleClass="text-[#B91C1C]" />
-          </a>
-
-          {dicas.length > 0 && (
-            <>
-              <p className="col-span-2 pl-1 pt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
-                Dicas & Roteiros
-              </p>
-              {dicas.map((item) => (
-                <PartnerCard key={item.id} item={item} preferMap />
-              ))}
-            </>
-          )}
-        </main>
-
+        <GuiaGrid cards={cards} />
       </div>
 
       <SomarFooter className="mt-auto pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))]" />
-
-      <GuiaEmergencySheet lines={emergencyLines} />
-
     </div>
-  )
-}
-
-function CardBody({ kind, title, titleClass, item }: {
-  kind: string
-  title: string
-  titleClass?: string
-  item?: { name?: string; externalUrl?: string | null }
-}) {
-  return (
-    <>
-      <GuiaIcon kind={kind} item={item} />
-      <span className={`line-clamp-2 w-full break-words text-center text-[13px] font-semibold leading-tight text-[#0F172A] ${titleClass ?? ''}`}>
-        {title}
-      </span>
-    </>
-  )
-}
-
-function PartnerCard({ item, preferMap }: { item: Item; preferMap: boolean }) {
-  const action = actionFor(item, preferMap)
-  const body = <CardBody kind={item.category} title={item.name} item={item} />
-  return action ? (
-    <a
-      href={action.href}
-      target={action.href.startsWith('tel:') ? undefined : '_blank'}
-      rel="noopener noreferrer"
-      aria-label={`${item.name} — ${action.hint}`}
-      className={CARD}
-    >
-      {body}
-    </a>
-  ) : (
-    <div className={CARD}>{body}</div>
   )
 }

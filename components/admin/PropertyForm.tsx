@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/toast'
 import { createClient } from '@/lib/supabase/client'
 import { createProperty, updateProperty, createCoverUploadUrl, type PropertyInput } from '@/lib/actions/imoveis'
 import { PROPERTY_TYPES, COVER_BUCKET, COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
+import { DELIVERY_PLACEHOLDER } from '@/lib/guia'
 
 export type PropertyFormValues = {
   name: string
@@ -241,12 +242,12 @@ export function PropertyForm({
             <Input id="wifiPassword" name="wifiPassword" autoComplete="off" defaultValue={initial?.wifiPassword ?? ''} />
           </Field>
         </div>
-        <Field label="Instruções para entregadores" htmlFor="deliveryInstructions">
+        <Field label="Endereço padrão para entregas" htmlFor="deliveryInstructions">
           <Textarea
             id="deliveryInstructions"
             name="deliveryInstructions"
             rows={3}
-            placeholder="Ex: Casa azul no final da Rua das Dunas, portão de madeira. Tocar a campainha ao chegar."
+            placeholder={DELIVERY_PLACEHOLDER}
             defaultValue={initial?.deliveryInstructions ?? ''}
           />
         </Field>

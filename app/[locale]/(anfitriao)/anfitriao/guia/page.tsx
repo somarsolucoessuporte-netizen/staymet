@@ -81,6 +81,7 @@ export default async function AnfitriaoGuiaPage({
           <GuiaWifiForm
             key={property.id}
             propertyId={property.id}
+            propertyName={property.name}
             wifiName={property.wifiName}
             wifiPassword={property.wifiPassword}
             deliveryInstructions={property.deliveryInstructions}
@@ -98,6 +99,8 @@ export default async function AnfitriaoGuiaPage({
           <GuiaPartners
             key={property.id}
             propertyId={property.id}
+            propertyName={property.name}
+            defaultAddress={property.deliveryInstructions}
             partners={partners.map((p) => ({
               id: p.id,
               name: p.name,
@@ -108,6 +111,7 @@ export default async function AnfitriaoGuiaPage({
               description: p.description,
               active: p.active,
               sortOrder: p.sortOrder,
+              deliveryNote: p.deliveryNote,
             }))}
           />
         </CardContent>

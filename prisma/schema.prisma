@@ -269,6 +269,7 @@ model Partner {
   whatsappUrl String?  // ex: https://wa.me/5585999887766
   externalUrl String?  // Google Maps, site, rota
   sortOrder   Int      @default(0) // ordem no painel e na tela do hóspede
+  deliveryNote String? // instrução de entrega específica deste estabelecimento (senão usa a da casa)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 

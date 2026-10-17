@@ -34,3 +34,32 @@ export function formatWhatsappBR(digits: string) {
   if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
   return d
 }
+
+// ─── Mensagens prontas do WhatsApp (guia do hóspede + prévia no painel) ───
+
+/** Categorias em que o hóspede faz pedido com entrega */
+export const ORDER_CATEGORIES = ['MERCADO', 'RESTAURANTE', 'DELIVERY'] as const
+
+export function isOrderCategory(category: string) {
+  return (ORDER_CATEGORIES as readonly string[]).includes(category)
+}
+
+/** Mensagem que o hóspede envia ao tocar no botão de WhatsApp */
+export function buildGuestMessage(category: string, propertyName: string, address?: string | null) {
+  if (category === 'ANFITRIAO') return `Olá! Sou hóspede da ${propertyName}.`
+  if (!isOrderCategory(category)) return `Olá! Estou hospedado(a) na ${propertyName}.`
+  const base = `Olá! Estou hospedado(a) na ${propertyName} e gostaria de fazer um pedido.`
+  return address?.trim() ? `${base}\n\nEndereço para entrega:\n${address.trim()}` : base
+}
+
+/** Acrescenta ?text= a um link wa.me (respeita links que já têm parâmetros) */
+export function withWhatsappText(url: string, text: string) {
+  return `${url}${url.includes('?') ? '&' : '?'}text=${encodeURIComponent(text)}`
+}
+
+/** Exemplo de "Endereço padrão para entregas" (painel do anfitrião e cadastro do imóvel) */
+export const DELIVERY_PLACEHOLDER = [
+  'Rua ..., nº ... – Preá, Cruz/CE',
+  'Referência: casa azul, portão de madeira, ao lado da pousada X',
+  'Ao chegar: chame no WhatsApp',
+].join('\n')

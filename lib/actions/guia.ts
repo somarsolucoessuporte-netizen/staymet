@@ -136,6 +136,7 @@ const partnerSchema = z.object({
   whatsapp: optionalText,
   externalUrl: optionalText,
   description: keepIfMissing,
+  deliveryNote: keepIfMissing,
 })
 
 export type PartnerInput = z.input<typeof partnerSchema>

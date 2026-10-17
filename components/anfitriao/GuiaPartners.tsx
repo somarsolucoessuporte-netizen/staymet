@@ -5,7 +5,8 @@ import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2 } fr
 import { useToast } from '@/components/ui/toast'
 import { upsertPartner, removePartner, reorderPartner, togglePartnerActive } from '@/lib/actions/guia'
 import {
-  PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, formatWhatsappBR, type PartnerCategory,
+  PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, formatWhatsappBR, isOrderCategory, buildGuestMessage,
+  type PartnerCategory,
 } from '@/lib/guia'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ export type GuiaPartner = {
   description: string | null
   active: boolean
   sortOrder: number
+  deliveryNote: string | null
 }
 
 type Draft = { key: string }
@@ -50,7 +52,15 @@ function testHref(category: string, whatsapp: string, link: string, phone: strin
   return (sectionOf(category) === 'dicas' ? url ?? wa : wa ?? url) ?? tel
 }
 
-export function GuiaPartners({ propertyId, partners }: { propertyId: string; partners: GuiaPartner[] }) {
+type RowContext = { propertyId: string; propertyName: string; defaultAddress: string | null }
+
+export function GuiaPartners({
+  propertyId,
+  propertyName,
+  defaultAddress,
+  partners,
+}: RowContext & { partners: GuiaPartner[] }) {
+  const ctx: RowContext = { propertyId, propertyName, defaultAddress }
   const [drafts, setDrafts] = useState<Draft[]>([])
   const nextKey = useRef(0)
 
@@ -83,7 +93,7 @@ export function GuiaPartners({ propertyId, partners }: { propertyId: string; par
               return (
                 <PartnerRow
                   key={p.id}
-                  propertyId={propertyId}
+                  ctx={ctx}
                   partner={p}
                   canUp={!!prev && prev.category === p.category}
                   canDown={!!next && next.category === p.category}
@@ -102,7 +112,7 @@ export function GuiaPartners({ propertyId, partners }: { propertyId: string; par
         <div className="space-y-2.5">
           <p className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">Novo botão</p>
           {drafts.map((d) => (
-            <PartnerRow key={d.key} propertyId={propertyId} onCreated={() => dropDraft(d.key)} onDiscard={() => dropDraft(d.key)} />
+            <PartnerRow key={d.key} ctx={ctx} onCreated={() => dropDraft(d.key)} onDiscard={() => dropDraft(d.key)} />
           ))}
         </div>
       )}
@@ -121,20 +131,21 @@ export function GuiaPartners({ propertyId, partners }: { propertyId: string; par
 type Status = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; msg: string }
 
 function PartnerRow({
-  propertyId,
+  ctx,
   partner,
   canUp = false,
   canDown = false,
   onCreated,
   onDiscard,
 }: {
-  propertyId: string
+  ctx: RowContext
   partner?: GuiaPartner
   canUp?: boolean
   canDown?: boolean
   onCreated?: () => void
   onDiscard?: () => void
 }) {
+  const { propertyId } = ctx
   const isNew = !partner
   const saved = {
     category: validCategory(partner?.category ?? 'DELIVERY'),
@@ -142,6 +153,7 @@ function PartnerRow({
     whatsapp: formatWhatsappBR(whatsappDigitsFromUrl(partner?.whatsappUrl)),
     link: partner?.externalUrl ?? '',
     description: partner?.description ?? '',
+    deliveryNote: partner?.deliveryNote ?? '',
   }
 
   const [category, setCategory] = useState<PartnerCategory>(saved.category)
@@ -150,6 +162,9 @@ function PartnerRow({
   const [link, setLink] = useState(saved.link)
   const [description, setDescription] = useState(saved.description)
   const [showDesc, setShowDesc] = useState(!!saved.description)
+  const [deliveryNote, setDeliveryNote] = useState(saved.deliveryNote)
+  const [showNote, setShowNote] = useState(!!saved.deliveryNote)
+  const isOrder = isOrderCategory(category)
   const [status, setStatus] = useState<Status>({ kind: 'idle' })
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [busy, startTransition] = useTransition()
@@ -168,7 +183,8 @@ function PartnerRow({
       name.trim() !== s.name ||
       whatsapp.replace(/\D/g, '') !== s.whatsapp.replace(/\D/g, '') ||
       link.trim() !== s.link ||
-      description.trim() !== s.description
+      description.trim() !== s.description ||
+      (isOrder && deliveryNote.trim() !== s.deliveryNote)
     )
   }
 
@@ -188,13 +204,19 @@ function PartnerRow({
         whatsapp,
         externalUrl: link,
         description,
+        // só categorias de pedido usam; nas outras o valor salvo fica intocado
+        ...(isOrder ? { deliveryNote } : {}),
       })
       if (!res.ok) {
         setStatus({ kind: 'error', msg: res.error })
         return
       }
       const digits = whatsapp.replace(/\D/g, '')
-      lastSaved.current = { category, name: name.trim(), whatsapp: formatWhatsappBR(digits), link: link.trim(), description: description.trim() }
+      lastSaved.current = {
+        category, name: name.trim(), whatsapp: formatWhatsappBR(digits), link: link.trim(),
+        description: description.trim(),
+        deliveryNote: isOrder ? deliveryNote.trim() : lastSaved.current.deliveryNote,
+      }
       setWhatsapp(formatWhatsappBR(digits))
       if (isNew) {
         onCreated?.()
@@ -307,6 +329,34 @@ function PartnerRow({
           + descrição
         </button>
       )}
+
+      {/* Instrução de entrega própria (Mercado, Restaurante, Delivery) */}
+      {isOrder &&
+        (showNote ? (
+          <div className="mt-2 space-y-1.5">
+            <label className="block text-xs font-semibold text-[#475569]" htmlFor={`note-${partner?.id ?? 'novo'}`}>
+              Instrução de entrega para este estabelecimento
+            </label>
+            <textarea
+              id={`note-${partner?.id ?? 'novo'}`}
+              value={deliveryNote}
+              onChange={(e) => setDeliveryNote(e.target.value)}
+              rows={2}
+              placeholder="Deixe vazio para usar o endereço padrão da casa"
+              className={cn(inputCls, 'h-auto py-2')}
+            />
+            <details className="text-xs text-[#64748B]">
+              <summary className="cursor-pointer font-medium text-[#1A56DB]">Ver mensagem que o hóspede vai mandar</summary>
+              <p className="mt-1.5 whitespace-pre-line rounded-lg bg-[#F0FDF4] p-2.5 text-[#334155]">
+                {buildGuestMessage(category, ctx.propertyName, deliveryNote.trim() || ctx.defaultAddress)}
+              </p>
+            </details>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setShowNote(true)} className="ml-3 mt-1.5 text-xs font-medium text-[#1A56DB]">
+            + instrução de entrega
+          </button>
+        ))}
 
       {/* Linha 3: prévia + ações */}
       <div className="mt-3 flex items-center gap-2">
