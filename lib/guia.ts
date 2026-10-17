@@ -25,3 +25,12 @@ export function whatsappDigitsFromUrl(url?: string | null) {
   if (!url) return ''
   return url.replace(/^https?:\/\/(api\.)?wa\.me\//i, '').replace(/\D/g, '')
 }
+
+/** Dígitos do WhatsApp → "(85) 99999-8888" (tira o 55 do Brasil para exibir) */
+export function formatWhatsappBR(digits: string) {
+  const d = digits.replace(/\D/g, '')
+  const local = d.startsWith('55') && (d.length === 12 || d.length === 13) ? d.slice(2) : d
+  if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`
+  if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`
+  return d
+}

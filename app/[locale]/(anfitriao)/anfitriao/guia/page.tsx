@@ -106,6 +106,8 @@ export default async function AnfitriaoGuiaPage({
               whatsappUrl: p.whatsappUrl,
               externalUrl: p.externalUrl,
               description: p.description,
+              active: p.active,
+              sortOrder: p.sortOrder,
             }))}
           />
         </CardContent>

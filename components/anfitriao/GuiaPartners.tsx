@@ -1,13 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { Pencil, Trash2, Plus, Phone, MessageCircle, ExternalLink } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useRef, useState, useTransition } from 'react'
+import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2 } from 'lucide-react'
 import { useToast } from '@/components/ui/toast'
-import { upsertPartner, removePartner } from '@/lib/actions/guia'
-import { PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, type PartnerCategory } from '@/lib/guia'
+import { upsertPartner, removePartner, reorderPartner, togglePartnerActive } from '@/lib/actions/guia'
+import {
+  PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, formatWhatsappBR, type PartnerCategory,
+} from '@/lib/guia'
 import { cn } from '@/lib/utils'
 
 export type GuiaPartner = {
@@ -18,215 +17,390 @@ export type GuiaPartner = {
   whatsappUrl: string | null
   externalUrl: string | null
   description: string | null
+  active: boolean
+  sortOrder: number
 }
 
-const selectClass =
-  'flex h-10 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent'
+type Draft = { key: string }
 
-function CategoryBadge({ category }: { category: string }) {
-  const meta = getCategoryMeta(category)
-  return (
-    <span className={cn('inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium', meta?.badge ?? 'bg-muted text-muted-foreground border-border')}>
-      {meta ? `${meta.emoji} ${meta.label}` : category}
-    </span>
+const CATEGORY_ORDER = PARTNER_CATEGORIES.map((c) => c.value as string)
+const sectionOf = (cat: string) => getCategoryMeta(cat)?.section ?? 'contatos'
+const validCategory = (cat: string): PartnerCategory =>
+  (CATEGORY_ORDER.includes(cat) ? cat : 'OUTRO') as PartnerCategory
+
+const inputCls =
+  'h-10 w-full min-w-0 rounded-lg border border-[#E2E8F0] bg-white px-3 text-sm placeholder:text-gray-400 focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/15'
+
+/** Mesma regra do servidor (buildWhatsappUrl), só para o botão "Testar" e a prévia */
+function waLink(raw: string) {
+  let d = raw.replace(/\D/g, '')
+  if (d.length === 10 || d.length === 11) d = `55${d}`
+  return d.length >= 12 && d.length <= 15 ? `https://wa.me/${d}` : null
+}
+function normalizeLink(raw: string) {
+  const v = raw.trim()
+  if (!v) return null
+  return /^https?:\/\//i.test(v) ? v : `https://${v}`
+}
+/** Igual ao actionFor do guia: contatos priorizam WhatsApp; dicas priorizam o link */
+function testHref(category: string, whatsapp: string, link: string, phone: string | null) {
+  const wa = waLink(whatsapp)
+  const url = normalizeLink(link)
+  const tel = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null
+  return (sectionOf(category) === 'dicas' ? url ?? wa : wa ?? url) ?? tel
+}
+
+export function GuiaPartners({ propertyId, partners }: { propertyId: string; partners: GuiaPartner[] }) {
+  const [drafts, setDrafts] = useState<Draft[]>([])
+  const nextKey = useRef(0)
+
+  // Mesma ordem do guia: categoria → sortOrder
+  const sorted = [...partners].sort(
+    (a, b) => CATEGORY_ORDER.indexOf(validCategory(a.category)) - CATEGORY_ORDER.indexOf(validCategory(b.category)) || a.sortOrder - b.sortOrder,
   )
-}
+  const groups = [
+    { key: 'contatos', title: 'Contatos (WhatsApp)', items: sorted.filter((p) => sectionOf(p.category) === 'contatos') },
+    { key: 'dicas', title: 'Dicas e roteiros (mapa/link)', items: sorted.filter((p) => sectionOf(p.category) === 'dicas') },
+  ]
+  const visible = partners.filter((p) => p.active).length
 
-function PartnerForm({
-  propertyId,
-  partner,
-  onDone,
-}: {
-  propertyId: string
-  partner?: GuiaPartner
-  onDone: () => void
-}) {
-  const [pending, startTransition] = useTransition()
-  const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
-
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    const fd = new FormData(e.currentTarget)
-    const get = (k: string) => String(fd.get(k) ?? '')
-    startTransition(async () => {
-      const res = await upsertPartner(propertyId, {
-        id: partner?.id,
-        name: get('name'),
-        category: get('category') as PartnerCategory,
-        phone: get('phone'),
-        whatsapp: get('whatsapp'),
-        externalUrl: get('externalUrl'),
-        description: get('description'),
-      })
-      if (res.ok) {
-        toast({ title: partner ? 'Contato atualizado' : 'Contato adicionado', variant: 'success' })
-        onDone()
-      } else {
-        setError(res.error)
-      }
-    })
-  }
+  const addDraft = () => setDrafts((d) => [...d, { key: `novo-${nextKey.current++}` }])
+  const dropDraft = (key: string) => setDrafts((d) => d.filter((x) => x.key !== key))
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded-xl border border-border bg-muted/40 p-4">
-      <div className="space-y-1.5">
-        <Label htmlFor="p-name">Nome*</Label>
-        <Input id="p-name" name="name" required defaultValue={partner?.name ?? ''} />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="p-category">Categoria*</Label>
-        <select id="p-category" name="category" required defaultValue={partner?.category ?? 'DELIVERY'} className={selectClass}>
-          {PARTNER_CATEGORIES.map((c) => (
-            <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
+    <div className="space-y-5">
+      <p className="text-xs font-medium text-[#64748B]">
+        {partners.length} {partners.length === 1 ? 'botão' : 'botões'} · {visible} {visible === 1 ? 'visível' : 'visíveis'} para o hóspede
+      </p>
+
+      {groups.map((g) =>
+        g.items.length === 0 ? null : (
+          <div key={g.key} className="space-y-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">{g.title}</p>
+            {g.items.map((p, i) => {
+              const prev = g.items[i - 1]
+              const next = g.items[i + 1]
+              return (
+                <PartnerRow
+                  key={p.id}
+                  propertyId={propertyId}
+                  partner={p}
+                  canUp={!!prev && prev.category === p.category}
+                  canDown={!!next && next.category === p.category}
+                />
+              )
+            })}
+          </div>
+        ),
+      )}
+
+      {partners.length === 0 && drafts.length === 0 && (
+        <p className="text-sm text-[#64748B]">Nenhum botão ainda. Adicione o primeiro abaixo.</p>
+      )}
+
+      {drafts.length > 0 && (
+        <div className="space-y-2.5">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">Novo botão</p>
+          {drafts.map((d) => (
+            <PartnerRow key={d.key} propertyId={propertyId} onCreated={() => dropDraft(d.key)} onDiscard={() => dropDraft(d.key)} />
           ))}
-        </select>
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label htmlFor="p-phone">Telefone</Label>
-          <Input id="p-phone" name="phone" type="tel" defaultValue={partner?.phone ?? ''} />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="p-whatsapp">Número WhatsApp</Label>
-          <Input
-            id="p-whatsapp"
-            name="whatsapp"
-            inputMode="numeric"
-            placeholder="5585999887766"
-            defaultValue={whatsappDigitsFromUrl(partner?.whatsappUrl)}
-          />
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="p-url">Link externo / Google Maps</Label>
-        <Input id="p-url" name="externalUrl" inputMode="url" placeholder="https://maps.app.goo.gl/..." defaultValue={partner?.externalUrl ?? ''} />
-      </div>
-      <div className="space-y-1.5">
-        <Label htmlFor="p-desc">Descrição</Label>
-        <Input id="p-desc" name="description" defaultValue={partner?.description ?? ''} />
-      </div>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      <div className="flex gap-2">
-        <Button type="submit" loading={pending} className="flex-1">Salvar</Button>
-        <Button type="button" variant="ghost" onClick={onDone} disabled={pending}>Cancelar</Button>
-      </div>
-    </form>
+      )}
+
+      <button
+        type="button"
+        onClick={addDraft}
+        className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#1A56DB]/30 text-sm font-semibold text-[#1A56DB] transition active:scale-[0.98]"
+      >
+        <Plus className="h-4 w-4" /> Adicionar botão
+      </button>
+    </div>
   )
 }
+
+type Status = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; msg: string }
 
 function PartnerRow({
   propertyId,
   partner,
-  onEdit,
+  canUp = false,
+  canDown = false,
+  onCreated,
+  onDiscard,
 }: {
   propertyId: string
-  partner: GuiaPartner
-  onEdit: () => void
+  partner?: GuiaPartner
+  canUp?: boolean
+  canDown?: boolean
+  onCreated?: () => void
+  onDiscard?: () => void
 }) {
-  const [confirming, setConfirming] = useState(false)
-  const [pending, startTransition] = useTransition()
-  const { toast } = useToast()
+  const isNew = !partner
+  const saved = {
+    category: validCategory(partner?.category ?? 'DELIVERY'),
+    name: partner?.name ?? '',
+    whatsapp: formatWhatsappBR(whatsappDigitsFromUrl(partner?.whatsappUrl)),
+    link: partner?.externalUrl ?? '',
+    description: partner?.description ?? '',
+  }
 
-  const onRemove = () => {
+  const [category, setCategory] = useState<PartnerCategory>(saved.category)
+  const [name, setName] = useState(saved.name)
+  const [whatsapp, setWhatsapp] = useState(saved.whatsapp)
+  const [link, setLink] = useState(saved.link)
+  const [description, setDescription] = useState(saved.description)
+  const [showDesc, setShowDesc] = useState(!!saved.description)
+  const [status, setStatus] = useState<Status>({ kind: 'idle' })
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [busy, startTransition] = useTransition()
+  const { toast } = useToast()
+  const rowRef = useRef<HTMLDivElement>(null)
+  const lastSaved = useRef(saved)
+
+  const meta = getCategoryMeta(category)
+  const active = partner?.active ?? true
+  const href = testHref(category, whatsapp, link, partner?.phone ?? null)
+
+  const dirty = () => {
+    const s = lastSaved.current
+    return (
+      category !== s.category ||
+      name.trim() !== s.name ||
+      whatsapp.replace(/\D/g, '') !== s.whatsapp.replace(/\D/g, '') ||
+      link.trim() !== s.link ||
+      description.trim() !== s.description
+    )
+  }
+
+  const save = () => {
+    if (status.kind === 'saving' || !dirty()) return
+    if (!name.trim()) {
+      // linha nova vazia: só avisa; linha existente: não deixa apagar o texto
+      if (!isNew || whatsapp || link) setStatus({ kind: 'error', msg: 'Informe o texto do botão.' })
+      return
+    }
+    setStatus({ kind: 'saving' })
     startTransition(async () => {
-      const res = await removePartner(propertyId, partner.id)
+      const res = await upsertPartner(propertyId, {
+        id: partner?.id,
+        name,
+        category,
+        whatsapp,
+        externalUrl: link,
+        description,
+      })
       if (!res.ok) {
-        toast({ title: 'Erro ao remover', description: res.error, variant: 'error' })
-        setConfirming(false)
+        setStatus({ kind: 'error', msg: res.error })
+        return
       }
+      const digits = whatsapp.replace(/\D/g, '')
+      lastSaved.current = { category, name: name.trim(), whatsapp: formatWhatsappBR(digits), link: link.trim(), description: description.trim() }
+      setWhatsapp(formatWhatsappBR(digits))
+      if (isNew) {
+        onCreated?.()
+        return
+      }
+      setStatus({ kind: 'saved' })
+      setTimeout(() => setStatus((s) => (s.kind === 'saved' ? { kind: 'idle' } : s)), 1500)
     })
   }
 
+  // Salva quando o foco sai da linha inteira (não a cada campo), ou no Enter
+  const onRowBlur = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (rowRef.current?.contains(e.relatedTarget as Node | null)) return
+    save()
+  }
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName === 'INPUT') {
+      e.preventDefault()
+      save()
+    }
+  }
+
+  const act = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
+    startTransition(async () => {
+      const res = await fn()
+      if (!res.ok) toast({ title: 'Erro', description: res.error, variant: 'error' })
+    })
+
+  const iconBtn =
+    'flex h-9 w-9 items-center justify-center rounded-lg text-[#475569] transition hover:bg-gray-100 active:scale-95 disabled:pointer-events-none disabled:opacity-30'
+
   return (
-    <div className="rounded-xl border border-border bg-card p-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-sm truncate">{partner.name}</p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <CategoryBadge category={partner.category} />
-            {partner.whatsappUrl ? (
-              <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
-                <MessageCircle className="h-3.5 w-3.5" /> +{whatsappDigitsFromUrl(partner.whatsappUrl)}
-              </span>
-            ) : partner.phone ? (
-              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                <Phone className="h-3.5 w-3.5" /> {partner.phone}
-              </span>
-            ) : null}
-            {partner.externalUrl && (
-              <a href={partner.externalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent">
-                <ExternalLink className="h-3.5 w-3.5" /> Link
-              </a>
-            )}
-          </div>
-        </div>
-        {!confirming && (
-          <div className="flex shrink-0 gap-1">
-            <Button size="icon-sm" variant="ghost" onClick={onEdit} aria-label="Editar">
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button size="icon-sm" variant="ghost" onClick={() => setConfirming(true)} aria-label="Remover">
-              <Trash2 className="h-4 w-4 text-danger" />
-            </Button>
-          </div>
+    <div
+      ref={rowRef}
+      onBlur={onRowBlur}
+      onKeyDown={onKeyDown}
+      className={cn(
+        'rounded-2xl border bg-white p-3 shadow-sm transition',
+        status.kind === 'error' ? 'border-red-300' : 'border-[#E2E8F0]',
+        !active && 'opacity-50',
+      )}
+    >
+      {/* Linha 1: ícone/tipo + texto + ativo */}
+      <div className="flex items-center gap-2">
+        <label className="relative flex h-10 w-12 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] text-xl">
+          <span aria-hidden>{meta?.emoji ?? '📌'}</span>
+          <select
+            aria-label="Tipo do botão"
+            value={category}
+            onChange={(e) => setCategory(e.target.value as PartnerCategory)}
+            className="absolute inset-0 cursor-pointer opacity-0"
+          >
+            {PARTNER_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>
+            ))}
+          </select>
+        </label>
+        <input
+          aria-label="Texto do botão"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Texto do botão (ex.: Pizzaria 1)"
+          autoFocus={isNew}
+          className={cn(inputCls, 'font-semibold')}
+        />
+        {!isNew && (
+          <Switch
+            checked={active}
+            disabled={busy}
+            onChange={(v) => act(() => togglePartnerActive(propertyId, partner.id, v))}
+          />
         )}
       </div>
-      {confirming && (
-        <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-red-50 px-3 py-2">
-          <span className="text-xs text-red-700">Remover este contato?</span>
-          <div className="flex gap-1">
-            <Button size="sm" variant="danger" loading={pending} onClick={onRemove}>Remover</Button>
-            <Button size="sm" variant="ghost" disabled={pending} onClick={() => setConfirming(false)}>Cancelar</Button>
-          </div>
-        </div>
+
+      {/* Linha 2: WhatsApp + link */}
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <input
+          aria-label="WhatsApp"
+          value={whatsapp}
+          onChange={(e) => setWhatsapp(e.target.value)}
+          onBlur={() => {
+            const d = whatsapp.replace(/\D/g, '')
+            if (d) setWhatsapp(formatWhatsappBR(d))
+          }}
+          inputMode="tel"
+          placeholder="WhatsApp: 85 99999-8888"
+          className={inputCls}
+        />
+        <input
+          aria-label="Link (Maps ou site)"
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          inputMode="url"
+          placeholder="ou Link (Maps/site)"
+          className={inputCls}
+        />
+      </div>
+
+      {/* Descrição opcional */}
+      {showDesc ? (
+        <input
+          aria-label="Descrição"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Descrição (opcional)"
+          className={cn(inputCls, 'mt-2')}
+        />
+      ) : (
+        <button type="button" onClick={() => setShowDesc(true)} className="mt-1.5 text-xs font-medium text-[#1A56DB]">
+          + descrição
+        </button>
       )}
+
+      {/* Linha 3: prévia + ações */}
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex h-[52px] w-28 shrink-0 flex-col items-center justify-center rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] px-1.5">
+          {active ? (
+            <>
+              <span className="text-lg leading-none">{meta?.emoji ?? '📌'}</span>
+              <span className="mt-0.5 w-full truncate text-center text-[11px] font-semibold text-[#0F172A]">{name || 'Texto do botão'}</span>
+            </>
+          ) : (
+            <span className="text-center text-[10px] font-semibold leading-tight text-[#64748B]">Oculto para o hóspede</span>
+          )}
+        </div>
+
+        <a
+          href={href ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-disabled={!href}
+          className={cn(
+            'inline-flex h-9 items-center gap-1 rounded-lg bg-[#F1F5FF] px-2.5 text-xs font-semibold text-[#1A56DB] transition active:scale-95',
+            !href && 'pointer-events-none opacity-40',
+          )}
+        >
+          <ExternalLink className="h-3.5 w-3.5" /> Testar
+        </a>
+
+        <div className="ml-auto flex items-center">
+          <StatusIcon status={status} />
+          {isNew ? (
+            <button type="button" onClick={onDiscard} aria-label="Descartar" className={iconBtn}>
+              <Trash2 className="h-4 w-4" />
+            </button>
+          ) : confirmDelete ? (
+            <span className="flex items-center gap-1 text-xs">
+              <span className="text-red-700">Remover?</span>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => act(() => removePartner(propertyId, partner.id))}
+                className="rounded-md bg-red-600 px-2 py-1 font-semibold text-white"
+              >
+                Sim
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(false)} className="rounded-md bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                Não
+              </button>
+            </span>
+          ) : (
+            <>
+              <button type="button" disabled={!canUp || busy} onClick={() => act(() => reorderPartner(propertyId, partner.id, 'up'))} aria-label="Subir" className={iconBtn}>
+                <ChevronUp className="h-4 w-4" />
+              </button>
+              <button type="button" disabled={!canDown || busy} onClick={() => act(() => reorderPartner(propertyId, partner.id, 'down'))} aria-label="Descer" className={iconBtn}>
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button type="button" onClick={() => setConfirmDelete(true)} aria-label="Remover" className={cn(iconBtn, 'text-red-600')}>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {!active && !isNew && (
+        <span className="mt-2 inline-block rounded-full bg-gray-200 px-2 py-0.5 text-[10px] font-bold text-gray-600">Oculto</span>
+      )}
+      {status.kind === 'error' && <p className="mt-2 text-xs font-medium text-red-600">{status.msg}</p>}
     </div>
   )
 }
 
-export function GuiaPartners({ propertyId, partners }: { propertyId: string; partners: GuiaPartner[] }) {
-  // null = nenhum form aberto | 'new' = adicionando | id = editando
-  const [editing, setEditing] = useState<string | null>(null)
+function StatusIcon({ status }: { status: Status }) {
+  if (status.kind === 'saving') return <Loader2 className="mr-1 h-4 w-4 animate-spin text-[#94A3B8]" aria-label="Salvando" />
+  if (status.kind === 'saved') return <Check className="mr-1 h-4 w-4 text-emerald-600" aria-label="Salvo" />
+  return null
+}
 
-  const known = PARTNER_CATEGORIES.map((c) => c.value as string)
-  const groups = [
-    ...PARTNER_CATEGORIES.map((c) => ({ key: c.value as string, items: partners.filter((p) => p.category === c.value) })),
-    // categorias antigas (LIMPEZA, MANUTENCAO...) continuam visíveis para poder editar/remover
-    { key: 'OUTRAS', items: partners.filter((p) => !known.includes(p.category)) },
-  ].filter((g) => g.items.length > 0)
-
+function Switch({ checked, disabled, onChange }: { checked: boolean; disabled?: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="space-y-4">
-      {groups.length === 0 && editing !== 'new' && (
-        <p className="text-sm text-muted-foreground">Nenhum contato ou local cadastrado ainda.</p>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label="Ativo"
+      title={checked ? 'Visível no guia' : 'Oculto no guia'}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        'relative h-6 w-11 shrink-0 rounded-full transition disabled:opacity-60',
+        checked ? 'bg-emerald-500' : 'bg-gray-300',
       )}
-
-      {groups.map((group) => {
-        const meta = getCategoryMeta(group.key)
-        return (
-          <div key={group.key} className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {meta ? `${meta.emoji} ${meta.label}` : 'Outras categorias'}
-            </p>
-            {group.items.map((partner) =>
-              editing === partner.id ? (
-                <PartnerForm key={partner.id} propertyId={propertyId} partner={partner} onDone={() => setEditing(null)} />
-              ) : (
-                <PartnerRow key={partner.id} propertyId={propertyId} partner={partner} onEdit={() => setEditing(partner.id)} />
-              ),
-            )}
-          </div>
-        )
-      })}
-
-      {editing === 'new' ? (
-        <PartnerForm propertyId={propertyId} onDone={() => setEditing(null)} />
-      ) : (
-        <Button variant="outline" className="w-full" onClick={() => setEditing('new')}>
-          <Plus className="h-4 w-4" /> Adicionar contato / local
-        </Button>
-      )}
-    </div>
+    >
+      <span className={cn('absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition', checked && 'translate-x-5')} />
+    </button>
   )
 }
