@@ -18,7 +18,8 @@ export async function proxy(request: NextRequest) {
 
   // Páginas de link mágico e guia de instalação: bypass total (sem locale, sem auth)
   // Callback do OAuth/Supabase: sem prefixo de locale e sem checagem de sessão (é ele que cria a sessão)
-  if (pathname.startsWith('/acesso/') || pathname.startsWith('/instalar') || pathname.startsWith('/auth/callback')) {
+  // Guia público do hóspede (/guia/<id>): link compartilhado, sem login
+  if (pathname.startsWith('/acesso/') || pathname.startsWith('/guia/') || pathname.startsWith('/instalar') || pathname.startsWith('/auth/callback')) {
     return NextResponse.next()
   }
 

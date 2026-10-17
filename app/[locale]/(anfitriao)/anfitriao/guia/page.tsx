@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Wifi, Users, Eye, BookOpen, ArrowRight } from 'lucide-react'
+import { headers } from 'next/headers'
+import { Wifi, Users, BookOpen, Link2 } from 'lucide-react'
 import { getCurrentDbUser, listGuiaProperties } from '@/lib/guia-access'
 import { getGuiaConfig } from '@/lib/actions/guia'
 import { GuiaWifiForm } from '@/components/anfitriao/GuiaWifiForm'
 import { GuiaPartners } from '@/components/anfitriao/GuiaPartners'
+import { GuiaShareLink } from '@/components/anfitriao/GuiaShareLink'
 import { cn } from '@/lib/utils'
 
 export default async function AnfitriaoGuiaPage({
@@ -35,7 +37,12 @@ export default async function AnfitriaoGuiaPage({
   const config = await getGuiaConfig(selected.id)
   if (!config) return null
 
-  const { property, partners, previewAccessCode } = config
+  const { property, partners } = config
+
+  const h = await headers()
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'staymet.somar.ia.br'
+  const proto = h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')
+  const appUrl = `${proto}://${host}`
 
   return (
     <div className="p-4 pt-6 space-y-5">
@@ -104,25 +111,17 @@ export default async function AnfitriaoGuiaPage({
         </CardContent>
       </Card>
 
-      {/* Seção 3 — Preview */}
-      <Card>
+      {/* Seção 3 — Link para o hóspede */}
+      <Card className="border-accent/40">
         <CardContent className="pt-4 space-y-3">
           <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-accent" />
-            <h2 className="font-semibold">Preview</h2>
+            <Link2 className="h-4 w-4 text-accent" />
+            <h2 className="font-semibold">Link para o hóspede</h2>
           </div>
-          {previewAccessCode ? (
-            <a
-              href={`/${locale}/hospede/boas-vindas?code=${previewAccessCode}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-accent text-sm font-semibold text-primary hover:bg-accent-600 transition-colors"
-            >
-              Ver como o hóspede vê <ArrowRight className="h-4 w-4" />
-            </a>
-          ) : (
-            <p className="text-sm text-muted-foreground">Crie uma reserva para visualizar o guia.</p>
-          )}
+          <p className="text-sm text-muted-foreground">
+            Envie este link ao hóspede. Ele abre direto no celular, sem login, com todos os botões acima.
+          </p>
+          <GuiaShareLink url={`${appUrl}/guia/${property.id}`} propertyName={property.name} />
         </CardContent>
       </Card>
     </div>
