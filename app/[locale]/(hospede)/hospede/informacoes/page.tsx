@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Wifi, Clock, FileText, MapPin, Phone, Copy } from 'lucide-react'
+import { Wifi, Clock, FileText, MapPin, Phone, Copy, Truck } from 'lucide-react'
+import { CopyTextButton } from '@/components/hospede/CopyTextButton'
 
 async function getPropertyFromCode(code?: string) {
   if (!code) return null
@@ -10,7 +11,7 @@ async function getPropertyFromCode(code?: string) {
       property: {
         select: {
           name: true, wifiName: true, wifiPassword: true,
-          rules: true, checkInTime: true, checkOutTime: true,
+          rules: true, deliveryInstructions: true, checkInTime: true, checkOutTime: true,
           address: true, city: true, state: true,
         },
       },
@@ -106,6 +107,20 @@ export default async function GuestInformacoesPage({
               <span className="font-semibold">Regras da Casa</span>
             </div>
             <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{property.rules}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Para entregadores */}
+      {property.deliveryInstructions && (
+        <Card>
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Truck className="h-4 w-4 text-accent" />
+              <span className="font-semibold">Para entregadores</span>
+            </div>
+            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">{property.deliveryInstructions}</p>
+            <CopyTextButton text={property.deliveryInstructions} />
           </CardContent>
         </Card>
       )}

@@ -102,6 +102,7 @@ model Property {
   checkOutTime  String       @default("11:00")
   maxGuests     Int          @default(4)
   rules         String?
+  deliveryInstructions String? // instruções para entregadores (como chegar, referência, etc.)
   active        Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -265,6 +266,9 @@ model Partner {
   email       String?
   description String?
   logoUrl     String?
+  whatsappUrl String?  // ex: https://wa.me/5585999887766
+  externalUrl String?  // Google Maps, site, rota
+  sortOrder   Int      @default(0) // ordem no painel e na tela do hóspede
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 

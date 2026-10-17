@@ -15,6 +15,7 @@ import {
   Wifi,
   MessageSquare,
   ListTodo,
+  BookOpen,
 } from 'lucide-react'
 
 type NavItem = {
@@ -42,6 +43,7 @@ const anfitriaoNav: NavItem[] = [
   { href: '/anfitriao/checkin', icon: ClipboardCheck, label: 'Check-in' },
   { href: '/anfitriao/checkout', icon: ClipboardCheck, label: 'Check-out' },
   { href: '/anfitriao/ocorrencias', icon: AlertTriangle, label: 'Ocorrências' },
+  { href: '/anfitriao/guia', icon: BookOpen, label: 'Guia' },
 ]
 
 const hospedeNav: NavItem[] = [

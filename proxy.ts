@@ -17,7 +17,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Páginas de link mágico e guia de instalação: bypass total (sem locale, sem auth)
-  if (pathname.startsWith('/acesso/') || pathname.startsWith('/instalar')) {
+  // Callback do OAuth/Supabase: sem prefixo de locale e sem checagem de sessão (é ele que cria a sessão)
+  if (pathname.startsWith('/acesso/') || pathname.startsWith('/instalar') || pathname.startsWith('/auth/callback')) {
     return NextResponse.next()
   }
 

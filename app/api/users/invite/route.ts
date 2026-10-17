@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
+import { Role } from '@prisma/client'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { prisma } from '@/lib/prisma'
 
-const supabaseAdmin = createSupabaseAdmin(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Papéis que um GESTOR pode atribuir — e as únicas contas existentes que ele pode alterar
+const GESTOR_ASSIGNABLE: Role[] = ['ANFITRIAO', 'PRESTADOR']
+const GESTOR_EDITABLE: Role[] = ['ANFITRIAO', 'PRESTADOR', 'HOSPEDE']
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -25,10 +25,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'email, name e role são obrigatórios' }, { status: 400 })
   }
 
+  if (!Object.values(Role).includes(role)) {
+    return NextResponse.json({ error: 'Papel inválido' }, { status: 400 })
+  }
+
   // GESTOR só pode convidar ANFITRIAO e PRESTADOR
-  if (caller.role === 'GESTOR' && !['ANFITRIAO', 'PRESTADOR'].includes(role)) {
+  if (caller.role === 'GESTOR' && !GESTOR_ASSIGNABLE.includes(role)) {
     return NextResponse.json({ error: 'Gestor só pode convidar Anfitrião e Prestador' }, { status: 403 })
   }
+
+  // O upsert abaixo altera o papel de contas existentes: GESTOR não pode mexer em ADMINISTRADOR/GESTOR/PROPRIETARIO
+  const existing = await prisma.user.findUnique({ where: { email }, select: { role: true } })
+  if (existing && caller.role === 'GESTOR' && !GESTOR_EDITABLE.includes(existing.role)) {
+    return NextResponse.json({ error: 'Sem permissão para alterar este usuário' }, { status: 403 })
+  }
+
+  const supabaseAdmin = createAdminClient()
 
   // Criar no Supabase Auth
   const tempPassword = Math.random().toString(36).slice(-8) + 'A1!'
@@ -41,7 +53,7 @@ export async function POST(req: NextRequest) {
   let supabaseId = authData?.user?.id
   if (authError && authError.message.includes('already registered')) {
     const { data: list } = await supabaseAdmin.auth.admin.listUsers()
-    supabaseId = list.users.find((u: any) => u.email === email)?.id
+    supabaseId = list.users.find((u) => u.email === email)?.id
     if (!supabaseId) return NextResponse.json({ error: authError.message }, { status: 400 })
   } else if (authError) {
     return NextResponse.json({ error: authError.message }, { status: 400 })

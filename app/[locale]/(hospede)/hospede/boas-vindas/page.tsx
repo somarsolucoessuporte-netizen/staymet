@@ -1,4 +1,4 @@
-import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin } from 'lucide-react'
+import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin, Compass } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { formatDate } from '@/lib/utils'
@@ -180,10 +180,11 @@ export default async function GuestWelcomePage({
           {[
             { label: 'Wi-Fi & Infos',  href: `/${locale}/hospede/informacoes?code=${code}`,  Icon: Info,              bg: 'bg-blue-50',    color: 'text-blue-700'    },
             { label: 'Solicitações',   href: `/${locale}/hospede/solicitacoes?code=${code}`,  Icon: MessageCircle,     bg: 'bg-emerald-50',  color: 'text-emerald-700' },
-            { label: 'Cardápio Local', href: `/${locale}/hospede/cardapio?code=${code}`,      Icon: UtensilsCrossed,   bg: 'bg-orange-50',  color: 'text-orange-700'  },
+            { label: 'Comida & Delivery', href: `/${locale}/hospede/cardapio?code=${code}`,   Icon: UtensilsCrossed,   bg: 'bg-orange-50',  color: 'text-orange-700'  },
+            { label: 'Roteiros & Dicas',  href: `/${locale}/hospede/cardapio?code=${code}#roteiros`, Icon: Compass,    bg: 'bg-teal-50',    color: 'text-teal-700'    },
             { label: 'Suporte',        href: `/${locale}/hospede/suporte?code=${code}`,        Icon: Headphones,    bg: 'bg-purple-50',  color: 'text-purple-700'  },
-          ].map((item) => (
-            <Link key={item.href} href={item.href}>
+          ].map((item, i, all) => (
+            <Link key={item.href} href={item.href} className={all.length % 2 === 1 && i === all.length - 1 ? 'col-span-2' : undefined}>
               <div className={`${item.bg} rounded-2xl p-4 flex flex-col gap-2 hover:opacity-90 active:scale-[0.97] transition-all`}>
                 <item.Icon size={20} strokeWidth={1.5} className={item.color} />
                 <p className={`text-sm font-semibold ${item.color}`}>{item.label}</p>

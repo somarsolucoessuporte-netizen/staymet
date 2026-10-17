@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
 import { Logo } from '@/components/ui/Logo'
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -20,6 +21,35 @@ const schema = z.object({
 })
 
 type FormData = z.infer<typeof schema>
+
+// Erros devolvidos por /auth/callback
+const callbackErrors: Record<string, string> = {
+  oauth: 'Não foi possível entrar com o Google. Tente novamente.',
+  oauth_email: 'Sua conta Google não informou um e-mail.',
+  oauth_conflict: 'Este e-mail já tem conta. Entre com e-mail e senha.',
+  link_invalido: 'Link inválido ou expirado. Solicite um novo.',
+  callback: 'Não foi possível concluir o login. Tente novamente.',
+}
+
+/** Avisos vindos pela URL (?error=... ou ?reset=ok) */
+function LoginNotice() {
+  const searchParams = useSearchParams()
+  const errorMsg = callbackErrors[searchParams.get('error') ?? '']
+
+  if (searchParams.get('reset') === 'ok') {
+    return (
+      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 mb-5">
+        <p className="text-sm text-emerald-700">Senha redefinida com sucesso. Entre com a nova senha.</p>
+      </div>
+    )
+  }
+  if (!errorMsg) return null
+  return (
+    <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 mb-5">
+      <p className="text-sm text-red-600">{errorMsg}</p>
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const { locale } = useParams<{ locale: string }>()
@@ -128,6 +158,21 @@ export default function LoginPage() {
             <p className="text-gray-500 text-sm mt-1">Entre na sua conta para continuar</p>
           </div>
 
+          <Suspense fallback={null}>
+            <LoginNotice />
+          </Suspense>
+
+          <GoogleSignInButton label="Entrar com Google" />
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative flex justify-center text-xs text-gray-400">
+              <span className="bg-[#F8FAFC] px-2">ou entre com e-mail</span>
+            </div>
+          </div>
+
           {/* Formulário */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-1.5">
@@ -153,7 +198,7 @@ export default function LoginPage() {
                   Senha
                 </Label>
                 <Link
-                  href={`/${locale}/auth/reset-password`}
+                  href={`/${locale}/auth/forgot-password`}
                   className="text-xs text-[#1A56DB] hover:underline"
                 >
                   Esqueci a senha
