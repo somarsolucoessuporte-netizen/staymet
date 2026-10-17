@@ -1,7 +1,9 @@
+import { redirect } from 'next/navigation'
 import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin, Compass } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { formatDate } from '@/lib/utils'
+import { formatDate, getRoleDashboard } from '@/lib/utils'
+import { getCurrentDbUser } from '@/lib/guia-access'
 
 async function getReservationFromCode(code?: string) {
   if (!code) return null
@@ -20,6 +22,40 @@ async function getReservationFromCode(code?: string) {
   })
 }
 
+// Hóspede logado sem link de reserva
+function NoAccessCode() {
+  const whatsapp = process.env.SOMAR_WHATSAPP?.replace(/\D/g, '')
+  const text = encodeURIComponent('Olá! Preciso de ajuda com meu acesso ao Anfitrião Management.')
+
+  return (
+    <div className="min-h-screen bg-[#0F172A] flex flex-col items-center justify-center px-6 text-center">
+      <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-5 border border-white/10">
+        <Image src="/icone.png" alt="" width={36} height={36} className="rounded-lg object-contain" />
+      </div>
+      <h1 className="text-xl font-bold text-white mb-2" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
+        Bem-vindo ao Anfitrião Management
+      </h1>
+      <p className="text-white/50 text-sm max-w-xs leading-relaxed">
+        Você precisa de um link de acesso enviado pelo seu anfitrião.
+      </p>
+      {whatsapp && (
+        <>
+          <p className="text-white/40 text-sm mt-4">Dúvidas? Entre em contato pelo WhatsApp.</p>
+          <a
+            href={`https://wa.me/${whatsapp}?text=${text}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          >
+            <MessageCircle size={18} />
+            Falar no WhatsApp
+          </a>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default async function GuestWelcomePage({
   params,
   searchParams,
@@ -29,6 +65,14 @@ export default async function GuestWelcomePage({
 }) {
   const { locale } = await params
   const { code } = await searchParams
+
+  if (!code) {
+    const dbUser = await getCurrentDbUser()
+    if (!dbUser) redirect(`/${locale}/login`)
+    if (dbUser.role !== 'HOSPEDE') redirect(getRoleDashboard(dbUser.role).replace('/pt-BR', `/${locale}`))
+    return <NoAccessCode />
+  }
+
   const reservation = await getReservationFromCode(code)
 
   if (!reservation) {

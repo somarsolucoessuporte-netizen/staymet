@@ -17,8 +17,10 @@ export default async function HospedeLayout({
 
   if (!user) redirect(`/${locale}/login`)
 
-  const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
-  if (!dbUser || !['HOSPEDE', 'ADMINISTRADOR'].includes(dbUser.role)) redirect(`/${locale}/login`)
+  // Qualquer papel logado pode abrir o guia com ?code= (anfitrião/gestor usam como preview).
+  // Sem code, boas-vindas redireciona conforme o papel.
+  const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id }, select: { id: true } })
+  if (!dbUser) redirect(`/${locale}/login`)
 
   return (
     <ToastContextProvider>
