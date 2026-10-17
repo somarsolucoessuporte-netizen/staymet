@@ -41,7 +41,7 @@ export function GoogleSignInButton({ label = 'Continuar com Google', next }: Goo
         onClick={handleGoogleSignIn}
         type="button"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition disabled:opacity-60 disabled:pointer-events-none"
+        className="w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition disabled:opacity-60 disabled:pointer-events-none"
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
           <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" />

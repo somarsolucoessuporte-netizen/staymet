@@ -5,6 +5,7 @@ import { Home, Wifi, Compass, Siren } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getCategoryMeta, PARTNER_CATEGORIES } from '@/lib/guia'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
+import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Guia público do hóspede: um link por imóvel, sem login.
@@ -102,6 +103,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
 
   return (
     <div id="topo" className="font-display min-h-screen bg-[#F8FAFC] text-[#0F172A]">
+      <GuiaSplash id={id} propertyName={guia.name} />
       <div className="mx-auto max-w-md pb-[calc(96px+env(safe-area-inset-bottom,0px))]">
 
         {/* CABEÇALHO */}

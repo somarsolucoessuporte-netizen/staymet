@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { AuthCard } from '@/components/auth/AuthCard'
+import { AuthCard, authInputClass, authButtonClass } from '@/components/auth/AuthCard'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -76,8 +76,8 @@ export default function ForgotPasswordPage() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email">E-mail</Label>
-          <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" {...register('email')} />
+          <Label className="text-sm font-medium text-gray-700" htmlFor="email">E-mail</Label>
+          <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" className={authInputClass} {...register('email')} />
           {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
         </div>
 
@@ -87,7 +87,7 @@ export default function ForgotPasswordPage() {
           </div>
         )}
 
-        <Button type="submit" className="w-full" loading={isSubmitting}>
+        <Button type="submit" className={authButtonClass} loading={isSubmitting}>
           Enviar link de recuperação
         </Button>
       </form>

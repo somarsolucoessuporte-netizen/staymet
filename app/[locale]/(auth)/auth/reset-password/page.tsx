@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
-import { AuthCard } from '@/components/auth/AuthCard'
+import { AuthCard, authInputClass, authButtonClass } from '@/components/auth/AuthCard'
 
 const schema = z
   .object({
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
         </p>
         <Link
           href={`/${locale}/auth/forgot-password`}
-          className="flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-white hover:bg-primary-700 transition-colors"
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-[#1A56DB] text-sm font-semibold text-white hover:bg-[#1648C0] transition-colors"
         >
           Solicitar novo link
         </Link>
@@ -111,13 +111,13 @@ export default function ResetPasswordPage() {
     <AuthCard title="Redefinir senha" subtitle="Escolha uma nova senha para sua conta" footer={backToLogin}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="password">Nova senha</Label>
-          <Input id="password" type="password" placeholder="••••••••" autoComplete="new-password" {...register('password')} />
+          <Label className="text-sm font-medium text-gray-700" htmlFor="password">Nova senha</Label>
+          <Input id="password" type="password" placeholder="••••••••" autoComplete="new-password" className={authInputClass} {...register('password')} />
           {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirm">Confirmar nova senha</Label>
-          <Input id="confirm" type="password" placeholder="••••••••" autoComplete="new-password" {...register('confirm')} />
+          <Label className="text-sm font-medium text-gray-700" htmlFor="confirm">Confirmar nova senha</Label>
+          <Input id="confirm" type="password" placeholder="••••••••" autoComplete="new-password" className={authInputClass} {...register('confirm')} />
           {errors.confirm && <p className="text-xs text-red-500">{errors.confirm.message}</p>}
         </div>
 
@@ -127,7 +127,7 @@ export default function ResetPasswordPage() {
           </div>
         )}
 
-        <Button type="submit" className="w-full" loading={isSubmitting}>
+        <Button type="submit" className={authButtonClass} loading={isSubmitting}>
           Salvar nova senha
         </Button>
       </form>

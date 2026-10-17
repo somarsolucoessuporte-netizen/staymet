@@ -12,9 +12,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
-import { Logo } from '@/components/ui/Logo'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
-import { AuthBrand, AuthFooter } from '@/components/auth/AuthBrand'
+import { AuthCard, AuthDivider, authInputClass, authButtonClass } from '@/components/auth/AuthCard'
 
 const schema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -90,158 +89,68 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex lg:grid lg:grid-cols-2">
+    <AuthCard
+      title="Bem-vindo de volta"
+      subtitle="Entre na sua conta para continuar"
+      footer={
+        <>
+          Não tem conta?{' '}
+          <Link href={`/${locale}/register`} className="text-[#1A56DB] font-semibold hover:underline">
+            Cadastre-se
+          </Link>
+        </>
+      }
+    >
+      <Suspense fallback={null}>
+        <LoginNotice />
+      </Suspense>
 
-      {/* ── PAINEL ESQUERDO (hero) — apenas desktop ── */}
-      <div className="hidden lg:flex flex-col justify-between bg-[#0F172A] p-10 relative overflow-hidden">
-        {/* Padrão de fundo */}
-        <div className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-            backgroundSize: '32px 32px',
-          }}
-        />
+      <GoogleSignInButton label="Entrar com Google" />
 
-        {/* Logo */}
-        <div className="relative">
-          <Logo variant="dark" size="lg" />
+      <AuthDivider label="ou entre com e-mail" />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">E-mail</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="seu@email.com"
+            autoComplete="email"
+            className={authInputClass}
+            {...register('email')}
+          />
+          {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
         </div>
 
-        {/* Copy central */}
-        <div className="relative space-y-6">
-          <div className="inline-flex items-center gap-2 bg-[#1A56DB]/20 border border-[#1A56DB]/30 rounded-full px-4 py-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1A56DB] animate-pulse" />
-            <span className="text-[#60A5FA] text-xs font-medium">Plataforma de gestão</span>
-          </div>
-          <h1 className="text-4xl font-bold text-white leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-            Gestão completa.<br />
-            <span className="text-[#60A5FA]">Estadia perfeita.</span>
-          </h1>
-          <p className="text-white/50 text-base leading-relaxed max-w-sm">
-            Gerencie imóveis, reservas, equipes e ocorrências em um só lugar.
-          </p>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            {[
-              { value: '98%', label: 'Satisfação' },
-              { value: '2x', label: 'Mais produtivo' },
-              { value: '24/7', label: 'Disponível' },
-            ].map((s) => (
-              <div key={s.label}>
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-white/40 text-xs mt-0.5">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Rodapé */}
-        <AuthFooter dark className="relative !text-left" />
-      </div>
-
-      {/* ── PAINEL DIREITO (formulário) ── */}
-      <div className="flex flex-col items-center justify-center bg-[#F8FAFC] px-6 py-12 lg:px-16">
-        <div className="w-full max-w-sm">
-
-          {/* Logo mobile */}
-          <AuthBrand className="lg:hidden" />
-
-          {/* Heading */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-[#0F172A]" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Bem-vindo de volta
-            </h2>
-            <p className="text-gray-500 text-sm mt-1">Entre na sua conta para continuar</p>
-          </div>
-
-          <Suspense fallback={null}>
-            <LoginNotice />
-          </Suspense>
-
-          <GoogleSignInButton label="Entrar com Google" />
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-xs text-gray-400">
-              <span className="bg-[#F8FAFC] px-2">ou entre com e-mail</span>
-            </div>
-          </div>
-
-          {/* Formulário */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                E-mail
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                autoComplete="email"
-                className="h-11 bg-white border-gray-200 focus:border-[#1A56DB] focus:ring-[#1A56DB]/20"
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                  Senha
-                </Label>
-                <Link
-                  href={`/${locale}/auth/forgot-password`}
-                  className="text-xs text-[#1A56DB] hover:underline"
-                >
-                  Esqueci a senha
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                autoComplete="current-password"
-                className="h-11 bg-white border-gray-200 focus:border-[#1A56DB] focus:ring-[#1A56DB]/20"
-                {...register('password')}
-              />
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 flex items-start gap-2.5">
-                <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-white text-[10px] font-bold">!</span>
-                </div>
-                <p className="text-sm text-red-600">{error}</p>
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full h-11 bg-[#1A56DB] hover:bg-[#1648C0] text-white font-semibold rounded-xl transition-all shadow-sm hover:shadow-md"
-              loading={isSubmitting}
-            >
-              {isSubmitting ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </form>
-
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Não tem conta?{' '}
-            <Link href={`/${locale}/register`} className="text-[#1A56DB] font-medium hover:underline">
-              Cadastre-se
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-gray-700">Senha</Label>
+            <Link href={`/${locale}/auth/forgot-password`} className="text-xs font-medium text-[#1A56DB] hover:underline">
+              Esqueci a senha
             </Link>
-          </p>
-
-          <AuthFooter className="mt-10 lg:hidden" />
+          </div>
+          <Input
+            id="password"
+            type="password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            className={authInputClass}
+            {...register('password')}
+          />
+          {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
         </div>
-      </div>
-    </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <Button type="submit" className={authButtonClass} loading={isSubmitting}>
+          {isSubmitting ? 'Entrando...' : 'Entrar'}
+        </Button>
+      </form>
+    </AuthCard>
   )
 }

@@ -69,7 +69,8 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
     { icon: Users,       title: 'Gestão de Usuários',  desc: 'Listar, criar e gerenciar usuários do sistema.', href: `/${locale}/admin/usuarios`,   iconCls: 'bg-blue-50 text-[#1A56DB]' },
     { icon: Building2,   title: 'Gestão de Imóveis',   desc: 'Visualizar todos os imóveis e seus status.',      href: `/${locale}/admin/imoveis`,    iconCls: 'bg-emerald-50 text-emerald-600' },
     { icon: AlertCircle, title: 'Vistorias Pendentes', desc: 'Validar vistorias digitais de entrada/saída.',    href: `/${locale}/admin/vistorias`,  iconCls: 'bg-orange-50 text-orange-600' },
-    { icon: BarChart3,   title: 'Relatórios',          desc: 'Relatórios de ocupação, receita e performance.',  href: `/${locale}/admin/relatorios`, iconCls: 'bg-purple-50 text-purple-600' },
+    // Página ainda não existe: fica desabilitado até ser criada
+    { icon: BarChart3,   title: 'Relatórios',          desc: 'Relatórios de ocupação, receita e performance.',  href: null,                          iconCls: 'bg-purple-50 text-purple-600' },
   ]
 
   const quickAccess = [
@@ -179,22 +180,34 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
         <section>
           <SectionTitle icon={Settings}>Administração</SectionTitle>
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href}
-                className="flex items-center gap-3.5 rounded-3xl bg-white p-4 shadow-[0_4px_16px_-8px_rgba(26,86,219,0.2)] ring-1 ring-black/5 transition active:scale-[0.98]"
-              >
-                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.iconCls}`}>
-                  <item.icon size={20} />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold">{item.title}</span>
-                  <span className="block text-xs text-[#64748B]">{item.desc}</span>
-                </span>
-                <ChevronRight size={18} className="shrink-0 text-[#94A3B8]" />
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const body = (
+                <>
+                  <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.iconCls}`}>
+                    <item.icon size={20} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-bold">{item.title}</span>
+                    <span className="block text-xs text-[#64748B]">{item.desc}</span>
+                  </span>
+                  {item.href ? (
+                    <ChevronRight size={18} className="shrink-0 text-[#94A3B8]" />
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-[0.65rem] font-bold text-gray-500">Em breve</span>
+                  )}
+                </>
+              )
+              const cls = 'flex items-center gap-3.5 rounded-3xl bg-white p-4 shadow-[0_4px_16px_-8px_rgba(26,86,219,0.2)] ring-1 ring-black/5'
+              return item.href ? (
+                <Link key={item.title} href={item.href} className={`${cls} transition active:scale-[0.98]`}>
+                  {body}
+                </Link>
+              ) : (
+                <div key={item.title} aria-disabled="true" className={`${cls} cursor-not-allowed opacity-60`}>
+                  {body}
+                </div>
+              )
+            })}
           </div>
         </section>
 

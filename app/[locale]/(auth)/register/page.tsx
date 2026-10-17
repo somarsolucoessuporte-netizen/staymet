@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 import { getRoleDashboard } from '@/lib/utils'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
-import { AuthBrand, AuthFooter } from '@/components/auth/AuthBrand'
+import { AuthCard, AuthDivider, authInputClass, authButtonClass } from '@/components/auth/AuthCard'
 
 const schema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
@@ -71,65 +71,51 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background px-4 py-8">
-      <div className="w-full max-w-sm">
-        <AuthBrand />
-
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <h2 className="text-lg font-bold mb-1">Criar conta</h2>
-          <p className="text-sm text-muted-foreground mb-6">Preencha os dados abaixo</p>
-
-          <GoogleSignInButton label="Cadastrar com Google" />
-
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center text-xs text-gray-400">
-              <span className="bg-card px-2">ou cadastre-se com e-mail</span>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Nome completo</Label>
-              <Input id="name" placeholder="Seu nome" {...register('name')} />
-              {errors.name && <p className="text-xs text-danger">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" {...register('email')} />
-              {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Senha</Label>
-              <Input id="password" type="password" placeholder="Mín. 6 caracteres" {...register('password')} />
-              {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
-            </div>
-
-            {error && (
-              <div className="bg-danger/10 border border-danger/20 rounded-lg p-3">
-                <p className="text-sm text-danger">{error}</p>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" size="lg" loading={isSubmitting}>
-              Criar conta
-            </Button>
-          </form>
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-4">
+    <AuthCard
+      title="Criar conta"
+      subtitle="Preencha os dados abaixo"
+      footer={
+        <>
           Já tem conta?{' '}
-          <Link href={`/${locale}/login`} className="text-accent font-medium hover:underline">
+          <Link href={`/${locale}/login`} className="text-[#1A56DB] font-semibold hover:underline">
             Entrar
           </Link>
-        </p>
+        </>
+      }
+    >
+      <GoogleSignInButton label="Cadastrar com Google" />
 
-        <AuthFooter className="mt-8" />
-      </div>
-    </div>
+      <AuthDivider label="ou cadastre-se com e-mail" />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="name" className="text-sm font-medium text-gray-700">Nome completo</Label>
+          <Input id="name" placeholder="Seu nome" autoComplete="name" className={authInputClass} {...register('name')} />
+          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">E-mail</Label>
+          <Input id="email" type="email" placeholder="seu@email.com" autoComplete="email" className={authInputClass} {...register('email')} />
+          {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-sm font-medium text-gray-700">Senha</Label>
+          <Input id="password" type="password" placeholder="Mín. 6 caracteres" autoComplete="new-password" className={authInputClass} {...register('password')} />
+          {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3.5">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        <Button type="submit" className={authButtonClass} loading={isSubmitting}>
+          Criar conta
+        </Button>
+      </form>
+    </AuthCard>
   )
 }
