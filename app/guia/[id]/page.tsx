@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
-import { Home, Wifi, Phone, Siren } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getCategoryMeta, PARTNER_CATEGORIES } from '@/lib/guia'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { GuiaEmergencySheet } from '@/components/guia/GuiaEmergencySheet'
+import { GuiaIcon } from '@/components/guia/categoryIcon'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Guia público do hóspede: um link por imóvel, sem login.
@@ -72,9 +72,9 @@ const EMERGENCIA = [
   { label: '👮 Polícia Militar', num: '190' },
 ]
 
-// Card padrão da grade: ~76px, só ícone + nome
+// Card padrão da grade: ícone + nome (até 2 linhas); cards da mesma linha com a mesma altura
 const CARD =
-  'flex h-[76px] w-full min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border border-[#E2E8F0] bg-white px-2 shadow-sm transition active:scale-95'
+  'flex h-full min-h-[104px] w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl border border-[#E2E8F0] bg-white px-2 py-2.5 shadow-sm transition active:scale-95'
 
 export default async function GuiaPublicoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -100,18 +100,11 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
       : []),
   ]
 
-  const nav = [
-    { href: '#topo', label: 'Início', Icon: Home },
-    ...(hasWifi ? [{ href: '#wifi', label: 'Wi-Fi', Icon: Wifi }] : []),
-    { href: '#contatos', label: 'Contatos', Icon: Phone },
-    { href: '#emergencia', label: 'Emergência', Icon: Siren },
-  ]
-
   return (
-    <div id="topo" className="font-display min-h-screen bg-[#F8FAFC] text-[#0F172A]">
+    <div id="topo" className="font-display flex min-h-[100dvh] flex-col bg-[#F8FAFC] text-[#0F172A]">
       <GuiaSplash id={id} propertyName={guia.name} />
 
-      <div className="mx-auto max-w-md pb-[calc(76px+env(safe-area-inset-bottom,0px))]">
+      <div className="mx-auto w-full max-w-md flex-1">
 
         {/* CABEÇALHO — máx. 72px */}
         <header className="relative flex h-[72px] items-center justify-center rounded-t-2xl bg-gradient-to-r from-[#0F3A7A] to-[#1A56DB] px-12 pb-2 text-white">
@@ -141,20 +134,20 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
         </div>
 
         {/* GRADE ÚNICA: Wi-Fi → contatos → emergência → dicas */}
-        <main id="contatos" className="grid scroll-mt-2 grid-cols-2 gap-2.5 px-3 pt-3">
+        <main id="contatos" className="grid grid-cols-2 gap-2.5 px-3 pb-3 pt-3">
           {hasWifi && (
-            <div id="wifi" className="scroll-mt-20">
+            <div id="wifi">
               {guia.wifiPassword ? (
                 <GuiaCopyButton
                   text={guia.wifiPassword}
                   toast={`✅ Senha copiada: ${guia.wifiName || 'Wi-Fi'}`}
                   className={CARD}
                 >
-                  <CardBody emoji="📶" title="Wi-Fi" />
+                  <CardBody kind="WIFI" title="Wi-Fi" />
                 </GuiaCopyButton>
               ) : (
                 <div className={CARD}>
-                  <CardBody emoji="📶" title={guia.wifiName ?? 'Wi-Fi'} />
+                  <CardBody kind="WIFI" title={guia.wifiName ?? 'Wi-Fi'} />
                 </div>
               )}
             </div>
@@ -170,12 +163,12 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
               toast="✅ Texto copiado! Cole no chat do entregador"
               className={CARD}
             >
-              <CardBody emoji="📦" title="Entregador" />
+              <CardBody kind="ENTREGADOR" title="Entregador" />
             </GuiaCopyButton>
           )}
 
           <a href="#emergencia" className={`${CARD} border-red-200 bg-red-50`}>
-            <CardBody emoji="🚨" title="Emergência" titleClass="text-[#B91C1C]" />
+            <CardBody kind="EMERGENCIA" title="Emergência" titleClass="text-[#B91C1C]" />
           </a>
 
           {dicas.length > 0 && (
@@ -190,45 +183,35 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           )}
         </main>
 
-        <SomarFooter className="mt-3 py-3" />
       </div>
+
+      <SomarFooter className="mt-auto pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))]" />
 
       <GuiaEmergencySheet lines={emergencyLines} />
 
-      {/* BARRA INFERIOR — fixa, 60px */}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E2E8F0] bg-white pb-[env(safe-area-inset-bottom,0px)]">
-        <div className="mx-auto flex h-[60px] max-w-md items-stretch">
-          {nav.map(({ href, label, Icon }) => (
-            <a
-              key={href}
-              href={href}
-              className={`flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] font-medium active:scale-95 ${
-                href === '#emergencia' ? 'text-[#DC2626]' : 'text-[#475569]'
-              }`}
-            >
-              <Icon size={22} />
-              {label}
-            </a>
-          ))}
-        </div>
-      </nav>
     </div>
   )
 }
 
-function CardBody({ emoji, title, titleClass }: { emoji: string; title: string; titleClass?: string }) {
+function CardBody({ kind, title, titleClass, item }: {
+  kind: string
+  title: string
+  titleClass?: string
+  item?: { name?: string; externalUrl?: string | null }
+}) {
   return (
     <>
-      <span className="text-3xl leading-none">{emoji}</span>
-      <span className={`w-full truncate text-center text-[13px] font-semibold text-[#0F172A] ${titleClass ?? ''}`}>{title}</span>
+      <GuiaIcon kind={kind} item={item} />
+      <span className={`line-clamp-2 w-full break-words text-center text-[13px] font-semibold leading-tight text-[#0F172A] ${titleClass ?? ''}`}>
+        {title}
+      </span>
     </>
   )
 }
 
 function PartnerCard({ item, preferMap }: { item: Item; preferMap: boolean }) {
   const action = actionFor(item, preferMap)
-  const meta = getCategoryMeta(item.category)
-  const body = <CardBody emoji={meta?.emoji ?? '📌'} title={item.name} />
+  const body = <CardBody kind={item.category} title={item.name} item={item} />
   return action ? (
     <a
       href={action.href}
