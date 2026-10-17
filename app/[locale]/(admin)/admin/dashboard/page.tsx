@@ -1,11 +1,11 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { headers } from 'next/headers'
 import {
   Building2, Users, AlertCircle, BarChart3, Settings, ExternalLink,
   ChevronRight, Eye, SlidersHorizontal, Link2, BookOpen, MapPin,
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+import { getRequestOrigin } from '@/lib/request-origin'
 import { getCurrentDbUser } from '@/lib/guia-access'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 import { SomarFooter } from '@/components/shared/SomarFooter'
@@ -41,20 +41,13 @@ async function getGuiaProperties() {
   })
 }
 
-async function getOrigin() {
-  const h = await headers()
-  const host = h.get('x-forwarded-host') ?? h.get('host')
-  const proto = h.get('x-forwarded-proto') ?? (host?.startsWith('localhost') ? 'http' : 'https')
-  return host ? `${proto}://${host}` : (process.env.NEXT_PUBLIC_APP_URL ?? '')
-}
-
 export default async function AdminDashboard({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params
   const [dbUser, stats, properties, origin] = await Promise.all([
     getCurrentDbUser(),
     getStats(),
     getGuiaProperties(),
-    getOrigin(),
+    getRequestOrigin(),
   ])
   const firstName = dbUser?.name.split(' ')[0] ?? 'Admin'
 

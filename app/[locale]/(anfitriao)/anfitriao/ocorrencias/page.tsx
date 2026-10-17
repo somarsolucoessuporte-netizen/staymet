@@ -33,7 +33,7 @@ export default async function AnfitriaoOcorrenciasPage({
       ) : (
         <div className="space-y-3">
           {occurrences.map((occ) => (
-            <Card key={occ.id} className={`border-l-4 ${occ.status === 'RESOLVIDA' ? 'border-l-success opacity-70' : 'border-l-danger'}`}>
+            <Card key={occ.id} id={`occ-${occ.id}`} className={`scroll-mt-4 border-l-4 ${occ.status === 'RESOLVIDA' ? 'border-l-success opacity-70' : 'border-l-danger'}`}>
               <CardContent className="py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">

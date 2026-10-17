@@ -10,7 +10,6 @@ import {
   Users,
   DollarSign,
   AlertTriangle,
-  ClipboardCheck,
   History,
   Wifi,
   MessageSquare,
@@ -38,10 +37,11 @@ const proprietarioNav: NavItem[] = [
   { href: '/proprietario/relatorios', icon: DollarSign, label: 'Relatórios' },
 ]
 
+// Check-in/Check-out saíram do menu: fase 2 – integração iCal Airbnb.
+// As rotas /anfitriao/checkin/[reservationId] e /anfitriao/checkout/[reservationId] continuam existindo.
 const anfitriaoNav: NavItem[] = [
   { href: '/anfitriao/dashboard', icon: LayoutDashboard, label: 'Início' },
-  { href: '/anfitriao/checkin', icon: ClipboardCheck, label: 'Check-in' },
-  { href: '/anfitriao/checkout', icon: ClipboardCheck, label: 'Check-out' },
+  { href: '/anfitriao/imoveis', icon: Building2, label: 'Imóveis' },
   { href: '/anfitriao/ocorrencias', icon: AlertTriangle, label: 'Ocorrências' },
   { href: '/anfitriao/guia', icon: BookOpen, label: 'Guia' },
 ]
