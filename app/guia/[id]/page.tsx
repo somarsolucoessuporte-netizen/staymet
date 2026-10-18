@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { getCategoryMeta, PARTNER_CATEGORIES, buildGuestMessage, buildDeliveryText, isOrderCategory, withWhatsappText } from '@/lib/guia'
+import { getCategoryMeta, buildGuestMessage, buildDeliveryText, isOrderCategory, withWhatsappText } from '@/lib/guia'
 import { googleMapsDirectionsUrl, googleMapsPointUrl, propertyPoint, wazeUrl } from '@/lib/geo'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { GuiaGrid, type GuiaCardData } from '@/components/guia/GuiaGrid'
@@ -121,10 +121,10 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const guia = await getGuia(id)
   if (!guia) notFound()
 
-  const order = PARTNER_CATEGORIES.map((c) => c.value as string)
+  // Ordem definida pelo anfitrião (arrastar no painel), dentro de cada grupo
   const items = guia.partners
     .map((p) => p.partner)
-    .sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category) || a.sortOrder - b.sortOrder)
+    .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
 
   const sectionOf = (cat: string) => getCategoryMeta(cat)?.section ?? 'contatos'
   const contatos = items.filter((i) => sectionOf(i.category) === 'contatos')

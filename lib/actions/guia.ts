@@ -8,7 +8,7 @@ import { ensurePublicBucket } from '@/lib/supabase/admin'
 import { COVER_BUCKET, COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
 import { slugify } from '@/lib/slug'
 import { isGoogleMapsHost, isValidLatLng, parseLatLngFromText, type LatLng } from '@/lib/geo'
-import { PARTNER_CATEGORIES, PARTNER_CATEGORY_VALUES } from '@/lib/guia'
+import { PARTNER_CATEGORY_VALUES } from '@/lib/guia'
 
 type ActionResult = { ok: true } | { ok: false; error: string }
 
@@ -294,39 +294,25 @@ export async function removePartner(propertyId: string, partnerId: string): Prom
 }
 
 /**
- * Move o botão uma posição. O guia ordena por categoria e depois por sortOrder,
- * então a troca é feita com o vizinho da MESMA categoria (é o que muda a ordem que o hóspede vê).
+ * Salva a ordem dos botões arrastados no painel (um grupo por vez: Contatos ou Dicas).
+ * O guia ordena só por sortOrder, então a posição aqui é a que o hóspede vê.
  */
-export async function reorderPartner(
-  propertyId: string,
-  partnerId: string,
-  direction: 'up' | 'down',
-): Promise<ActionResult> {
+export async function reorderPartners(propertyId: string, orderedIds: string[]): Promise<ActionResult> {
   try {
     await assertAccess(propertyId)
-    await assertLinked(propertyId, partnerId)
 
-    const current = await prisma.partner.findUnique({ where: { id: partnerId }, select: { category: true } })
-    if (!current) return { ok: false, error: 'Botão não encontrado.' }
+    const ids = z.array(z.string().min(1)).min(1).max(500).parse(orderedIds)
+    if (new Set(ids).size !== ids.length) return { ok: false, error: 'Lista de botões repetida.' }
 
-    const group = await prisma.partner.findMany({
-      where: { category: current.category, properties: { some: { propertyId } } },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      select: { id: true },
-    })
-    const idx = group.findIndex((p) => p.id === partnerId)
-    const target = direction === 'up' ? idx - 1 : idx + 1
-    if (idx < 0 || target < 0 || target >= group.length) return { ok: true }
+    const linked = await prisma.propertyPartner.count({ where: { propertyId, partnerId: { in: ids } } })
+    if (linked !== ids.length) return { ok: false, error: 'Botão não encontrado neste imóvel.' }
 
-    const ids = group.map((p) => p.id)
-    ;[ids[idx], ids[target]] = [ids[target], ids[idx]]
-
-    // Renumera o grupo inteiro (corrige sortOrder repetidos de dados antigos)
-    const base = PARTNER_CATEGORIES.findIndex((c) => c.value === current.category) * 1000 + 1
     await prisma.$transaction(
-      ids.map((id, i) => prisma.partner.update({ where: { id }, data: { sortOrder: base + i } })),
+      ids.map((id, i) => prisma.partner.update({ where: { id }, data: { sortOrder: i + 1 } })),
     )
 
+    const property = await prisma.property.findUnique({ where: { id: propertyId }, select: { slug: true } })
+    if (property?.slug) revalidatePath(`/g/${property.slug}`)
     refreshGuia(propertyId)
     return { ok: true }
   } catch (e) {

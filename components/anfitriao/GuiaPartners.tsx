@@ -1,11 +1,20 @@
 'use client'
 
-import { useRef, useState, useTransition } from 'react'
-import { ChevronUp, ChevronDown, Trash2, Plus, Check, ExternalLink, Loader2, Pencil, Minimize2 } from 'lucide-react'
+import { useRef, useState, useTransition, type ReactNode } from 'react'
+import { Trash2, Plus, Check, ExternalLink, Loader2, Pencil, Minimize2 } from 'lucide-react'
+import { DotsSixVertical } from '@phosphor-icons/react/ssr'
+import {
+  DndContext, closestCenter, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors,
+  type DragEndEvent, type PointerSensorOptions,
+} from '@dnd-kit/core'
+import {
+  SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useToast } from '@/components/ui/toast'
 import { CategoryPicker } from '@/components/anfitriao/CategoryPicker'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
-import { upsertPartner, removePartner, reorderPartner, togglePartnerActive } from '@/lib/actions/guia'
+import { upsertPartner, removePartner, reorderPartners, togglePartnerActive } from '@/lib/actions/guia'
 import {
   PARTNER_CATEGORIES, getCategoryMeta, whatsappDigitsFromUrl, formatWhatsappBR, isOrderCategory, buildGuestMessage,
   type PartnerCategory,
@@ -54,6 +63,20 @@ function testHref(category: string, whatsapp: string, link: string, phone: strin
   return (sectionOf(category) === 'dicas' ? url ?? wa : wa ?? url) ?? tel
 }
 
+/** PointerSensor só para mouse/caneta: no toque vale o TouchSensor (com delay, para não brigar com a rolagem) */
+class MousePointerSensor extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: ({ nativeEvent: e }: React.PointerEvent, { onActivation }: PointerSensorOptions) => {
+        if (e.pointerType === 'touch' || !e.isPrimary || e.button !== 0) return false
+        onActivation?.({ event: e })
+        return true
+      },
+    },
+  ]
+}
+
 /** mapsUrl: link do Google Maps do ponto salvo (entra na prévia como "Localização: …") */
 type RowContext = { propertyId: string; propertyName: string; defaultAddress: string | null; mapsUrl: string | null }
 
@@ -67,16 +90,45 @@ export function GuiaPartners({
   const ctx: RowContext = { propertyId, propertyName, defaultAddress, mapsUrl }
   const [drafts, setDrafts] = useState<Draft[]>([])
   const nextKey = useRef(0)
+  const { toast } = useToast()
+  // Ordem otimista após arrastar (por grupo); mantida por cima da ordem do servidor
+  const [override, setOverride] = useState<Record<string, string[]>>({})
 
-  // Mesma ordem do guia: categoria → sortOrder
-  const sorted = [...partners].sort(
-    (a, b) => CATEGORY_ORDER.indexOf(validCategory(a.category)) - CATEGORY_ORDER.indexOf(validCategory(b.category)) || a.sortOrder - b.sortOrder,
+  const sensors = useSensors(
+    useSensor(MousePointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
+
+  // Mesma ordem do guia: só sortOrder (a ordem do anfitrião), dentro de cada grupo
+  const sorted = [...partners].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+  const groupItems = (key: string) => {
+    const items = sorted.filter((p) => sectionOf(p.category) === key)
+    const ids = override[key]
+    if (!ids) return items
+    const pos = (id: string) => (ids.includes(id) ? ids.indexOf(id) : Infinity)
+    return [...items].sort((a, b) => pos(a.id) - pos(b.id))
+  }
   const groups = [
-    { key: 'contatos', title: 'Contatos (WhatsApp)', items: sorted.filter((p) => sectionOf(p.category) === 'contatos') },
-    { key: 'dicas', title: 'Dicas e roteiros (mapa/link)', items: sorted.filter((p) => sectionOf(p.category) === 'dicas') },
+    { key: 'contatos', title: 'Contatos (WhatsApp)', items: groupItems('contatos') },
+    { key: 'dicas', title: 'Dicas e roteiros (mapa/link)', items: groupItems('dicas') },
   ]
   const visible = partners.filter((p) => p.active).length
+
+  // Salva na hora (otimista); se falhar, volta à ordem anterior
+  const onDragEnd = (key: string, items: GuiaPartner[]) => async ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+    const before = items.map((p) => p.id)
+    const after = arrayMove(before, before.indexOf(String(active.id)), before.indexOf(String(over.id)))
+    setOverride((o) => ({ ...o, [key]: after }))
+    const res = await reorderPartners(propertyId, after)
+    if (res.ok) {
+      toast({ title: 'Ordem salva', variant: 'success' })
+    } else {
+      setOverride((o) => ({ ...o, [key]: before }))
+      toast({ title: 'Não foi possível salvar a ordem', description: res.error, variant: 'error' })
+    }
+  }
 
   const addDraft = () => setDrafts((d) => [...d, { key: `novo-${nextKey.current++}` }])
   const dropDraft = (key: string) => setDrafts((d) => d.filter((x) => x.key !== key))
@@ -91,19 +143,25 @@ export function GuiaPartners({
         g.items.length === 0 ? null : (
           <div key={g.key} className="space-y-2.5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-[#94A3B8]">{g.title}</p>
-            {g.items.map((p, i) => {
-              const prev = g.items[i - 1]
-              const next = g.items[i + 1]
-              return (
-                <PartnerRow
-                  key={p.id}
-                  ctx={ctx}
-                  partner={p}
-                  canUp={!!prev && prev.category === p.category}
-                  canDown={!!next && next.category === p.category}
-                />
-              )
-            })}
+            <DndContext
+              id={`guia-partners-${g.key}`}
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={onDragEnd(g.key, g.items)}
+              accessibility={{
+                screenReaderInstructions: {
+                  draggable: 'Para reordenar, pressione espaço, mova com as setas e pressione espaço de novo para soltar. Esc cancela.',
+                },
+              }}
+            >
+              <SortableContext items={g.items.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+                <div className="space-y-2.5">
+                  {g.items.map((p) => (
+                    <SortablePartner key={p.id} ctx={ctx} partner={p} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         ),
       )}
@@ -132,20 +190,52 @@ export function GuiaPartners({
   )
 }
 
+function SortablePartner({ ctx, partner }: { ctx: RowContext; partner: GuiaPartner }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({
+    id: partner.id,
+  })
+  // Arrasta só pela alça, para não atrapalhar o lápis e o interruptor
+  const handle = (
+    <button
+      type="button"
+      ref={setActivatorNodeRef}
+      {...attributes}
+      {...listeners}
+      aria-label={`Arrastar ${partner.name} para reordenar`}
+      className={cn(
+        '-ml-1 flex h-9 w-6 shrink-0 touch-none items-center justify-center rounded-md text-[#94A3B8] hover:text-[#64748B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A56DB]/30',
+        isDragging ? 'cursor-grabbing' : 'cursor-grab',
+      )}
+    >
+      <DotsSixVertical weight="bold" className="h-5 w-5" />
+    </button>
+  )
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Translate.toString(transform), transition }}
+      className={cn(
+        'relative rounded-2xl transition-[scale,box-shadow] duration-150',
+        isDragging && 'z-10 scale-[1.02] shadow-xl',
+      )}
+    >
+      <PartnerRow ctx={ctx} partner={partner} handle={handle} />
+    </div>
+  )
+}
+
 type Status = { kind: 'idle' } | { kind: 'saving' } | { kind: 'saved' } | { kind: 'error'; msg: string }
 
 function PartnerRow({
   ctx,
   partner,
-  canUp = false,
-  canDown = false,
+  handle,
   onCreated,
   onDiscard,
 }: {
   ctx: RowContext
   partner?: GuiaPartner
-  canUp?: boolean
-  canDown?: boolean
+  handle?: ReactNode
   onCreated?: () => void
   onDiscard?: () => void
 }) {
@@ -264,6 +354,7 @@ function PartnerRow({
         : partner.phone ?? 'Sem WhatsApp nem link'
     return (
       <div className={cn('flex items-center gap-3 rounded-2xl border border-[#E2E8F0] bg-white p-2.5 shadow-sm', !active && 'opacity-50')}>
+        {handle}
         <CategoryIcon kind={category} size={40} />
         <button type="button" onClick={() => setExpanded(true)} className="min-w-0 flex-1 text-left">
           <span className="block truncate text-sm font-semibold text-[#0F172A]">{name}</span>
@@ -291,6 +382,7 @@ function PartnerRow({
     >
       {/* Linha 1: ícone/tipo + texto + ativo */}
       <div className="flex items-center gap-2">
+        {handle}
         <CategoryPicker
           value={category}
           onChange={(v) => {
@@ -442,12 +534,6 @@ function PartnerRow({
             </span>
           ) : (
             <>
-              <button type="button" disabled={!canUp || busy} onClick={() => act(() => reorderPartner(propertyId, partner.id, 'up'))} aria-label="Subir" className={iconBtn}>
-                <ChevronUp className="h-4 w-4" />
-              </button>
-              <button type="button" disabled={!canDown || busy} onClick={() => act(() => reorderPartner(propertyId, partner.id, 'down'))} aria-label="Descer" className={iconBtn}>
-                <ChevronDown className="h-4 w-4" />
-              </button>
               <button type="button" onClick={() => setConfirmDelete(true)} aria-label="Remover" className={cn(iconBtn, 'text-red-600')}>
                 <Trash2 className="h-4 w-4" />
               </button>
