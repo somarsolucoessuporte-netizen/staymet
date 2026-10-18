@@ -12,7 +12,7 @@ import { GuiaShareLink } from '@/components/anfitriao/GuiaShareLink'
 import { GuiaSlugForm } from '@/components/anfitriao/GuiaSlugForm'
 import { GuiaPlaceForm } from '@/components/anfitriao/GuiaPlaceForm'
 import { GuiaLocationForm } from '@/components/anfitriao/GuiaLocationForm'
-import { propertyPoint } from '@/lib/geo'
+import { googleMapsPointUrl, propertyPoint } from '@/lib/geo'
 import { geocodeCity } from '@/lib/geocode'
 import { GuiaSuggestionsToggle } from '@/components/anfitriao/GuiaSuggestionsToggle'
 import { cn } from '@/lib/utils'
@@ -51,6 +51,7 @@ export default async function AnfitriaoGuiaPage({
   const guideUrl = property.slug ? `${origin}/g/${property.slug}` : `${origin}/guia/${property.id}`
   const qrOptions = { margin: 1, color: { dark: '#0F172A', light: '#FFFFFF' } }
   const savedPoint = propertyPoint(property)
+  const mapsUrl = savedPoint ? googleMapsPointUrl(savedPoint) : null
   const [qrSvg, qrPng, cityCenter] = await Promise.all([
     QRCode.toString(guideUrl, { ...qrOptions, type: 'svg' }),
     QRCode.toDataURL(guideUrl, { ...qrOptions, width: 1024 }),
@@ -170,6 +171,7 @@ export default async function AnfitriaoGuiaPage({
             wifiName={property.wifiName}
             wifiPassword={property.wifiPassword}
             deliveryInstructions={property.deliveryInstructions}
+            mapsUrl={mapsUrl}
           />
         </CardContent>
       </Card>
@@ -186,6 +188,7 @@ export default async function AnfitriaoGuiaPage({
             propertyId={property.id}
             propertyName={property.name}
             defaultAddress={property.deliveryInstructions}
+            mapsUrl={mapsUrl}
             partners={partners.map((p) => ({
               id: p.id,
               name: p.name,

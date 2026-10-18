@@ -15,9 +15,11 @@ interface GuiaWifiFormProps {
   wifiName: string | null
   wifiPassword: string | null
   deliveryInstructions: string | null
+  /** link do Google Maps do ponto salvo, igual ao que vai na mensagem do hóspede */
+  mapsUrl: string | null
 }
 
-export function GuiaWifiForm({ propertyId, propertyName, wifiName, wifiPassword, deliveryInstructions }: GuiaWifiFormProps) {
+export function GuiaWifiForm({ propertyId, propertyName, wifiName, wifiPassword, deliveryInstructions, mapsUrl }: GuiaWifiFormProps) {
   const [pending, startTransition] = useTransition()
   const [address, setAddress] = useState(deliveryInstructions ?? '')
   const { toast } = useToast()
@@ -69,7 +71,7 @@ export function GuiaWifiForm({ propertyId, propertyName, wifiName, wifiPassword,
           Prévia: mensagem que o hóspede vai mandar
         </p>
         <p className="whitespace-pre-line text-xs leading-relaxed text-[#334155]">
-          {buildGuestMessage('DELIVERY', propertyName, address)}
+          {buildGuestMessage('DELIVERY', propertyName, address, mapsUrl)}
         </p>
       </div>
       <Button type="submit" loading={pending} className="w-full">

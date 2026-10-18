@@ -54,15 +54,17 @@ function testHref(category: string, whatsapp: string, link: string, phone: strin
   return (sectionOf(category) === 'dicas' ? url ?? wa : wa ?? url) ?? tel
 }
 
-type RowContext = { propertyId: string; propertyName: string; defaultAddress: string | null }
+/** mapsUrl: link do Google Maps do ponto salvo (entra na prévia como "Localização: …") */
+type RowContext = { propertyId: string; propertyName: string; defaultAddress: string | null; mapsUrl: string | null }
 
 export function GuiaPartners({
   propertyId,
   propertyName,
   defaultAddress,
+  mapsUrl,
   partners,
 }: RowContext & { partners: GuiaPartner[] }) {
-  const ctx: RowContext = { propertyId, propertyName, defaultAddress }
+  const ctx: RowContext = { propertyId, propertyName, defaultAddress, mapsUrl }
   const [drafts, setDrafts] = useState<Draft[]>([])
   const nextKey = useRef(0)
 
@@ -371,7 +373,7 @@ function PartnerRow({
             <details className="text-xs text-[#64748B]">
               <summary className="cursor-pointer font-medium text-[#1A56DB]">Ver mensagem que o hóspede vai mandar</summary>
               <p className="mt-1.5 whitespace-pre-line rounded-lg bg-[#F0FDF4] p-2.5 text-[#334155]">
-                {buildGuestMessage(category, ctx.propertyName, deliveryNote.trim() || ctx.defaultAddress)}
+                {buildGuestMessage(category, ctx.propertyName, deliveryNote.trim() || ctx.defaultAddress, ctx.mapsUrl)}
               </p>
             </details>
           </div>
