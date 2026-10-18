@@ -88,11 +88,19 @@ export function isOrderCategory(category: string) {
 }
 
 /** Mensagem que o hóspede envia ao tocar no botão de WhatsApp */
-export function buildGuestMessage(category: string, propertyName: string, address?: string | null) {
+export function buildGuestMessage(category: string, propertyName: string, address?: string | null, mapsUrl?: string | null) {
   if (category === 'ANFITRIAO') return `Olá! Sou hóspede da ${propertyName}.`
   if (!isOrderCategory(category)) return `Olá! Estou hospedado(a) na ${propertyName}.`
   const base = `Olá! Estou hospedado(a) na ${propertyName} e gostaria de fazer um pedido.`
-  return address?.trim() ? `${base}\n\nEndereço para entrega:\n${address.trim()}` : base
+  const parts = [base]
+  if (address?.trim()) parts.push(`Endereço para entrega:\n${address.trim()}`)
+  if (mapsUrl) parts.push(`Localização: ${mapsUrl}`)
+  return parts.join('\n\n')
+}
+
+/** Texto para o entregador: instruções do anfitrião + link do ponto exato */
+export function buildDeliveryText(instructions?: string | null, mapsUrl?: string | null) {
+  return [instructions?.trim(), mapsUrl ? `Localização: ${mapsUrl}` : null].filter(Boolean).join('\n\n')
 }
 
 /** Acrescenta ?text= a um link wa.me (respeita links que já têm parâmetros) */

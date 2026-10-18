@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { getCategoryMeta, PARTNER_CATEGORIES, buildGuestMessage, isOrderCategory, withWhatsappText } from '@/lib/guia'
+import { getCategoryMeta, PARTNER_CATEGORIES, buildGuestMessage, buildDeliveryText, isOrderCategory, withWhatsappText } from '@/lib/guia'
+import { googleMapsDirectionsUrl, googleMapsPointUrl, propertyPoint, wazeUrl } from '@/lib/geo'
 import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { GuiaGrid, type GuiaCardData } from '@/components/guia/GuiaGrid'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
@@ -26,6 +27,9 @@ async function getGuia(id: string) {
       deliveryInstructions: true,
       suggestionsEnabled: true,
       locationUrl: true,
+      address: true,
+      latitude: true,
+      longitude: true,
       partners: {
         where: { partner: { active: true } },
         select: {
@@ -78,7 +82,7 @@ function captionFor(item: Item, section: string) {
   return 'Ver detalhes'
 }
 
-function partnerCard(item: Item, guia: Guia): GuiaCardData {
+function partnerCard(item: Item, guia: Guia, mapsUrl: string | null): GuiaCardData {
   const section = getCategoryMeta(item.category)?.section ?? 'contatos'
   const icon = <CategoryIcon kind={item.category} />
 
@@ -94,7 +98,7 @@ function partnerCard(item: Item, guia: Guia): GuiaCardData {
   }
 
   const order = isOrderCategory(item.category)
-  const message = buildGuestMessage(item.category, guia.name, item.deliveryNote || guia.deliveryInstructions)
+  const message = buildGuestMessage(item.category, guia.name, item.deliveryNote || guia.deliveryInstructions, mapsUrl)
   return {
     id: item.id, title: item.name, caption: captionFor(item, section), group: 'principal', icon,
     sheetTitle: getCategoryMeta(item.category)?.label ?? 'Contato',
@@ -128,6 +132,10 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const anfitriao = items.find((i) => i.category === 'ANFITRIAO' && i.whatsappUrl)
 
   const hasWifi = !!(guia.wifiName || guia.wifiPassword)
+  const point = propertyPoint(guia)
+  const mapsUrl = point ? googleMapsPointUrl(point) : null
+  const deliveryText = buildDeliveryText(guia.deliveryInstructions, mapsUrl)
+  const addressLine = [guia.address, guia.city && guia.state ? `${guia.city}/${guia.state}` : guia.city].filter(Boolean).join(' – ')
 
   const emergencyLines = [
     ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}`, kind: e.kind })),
@@ -151,20 +159,35 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           sheet: { type: 'wifi' as const, network: guia.wifiName, password: guia.wifiPassword },
         }]
       : []),
-    ...contatos.map((i) => partnerCard(i, guia)),
-    ...(guia.deliveryInstructions
+    ...contatos.map((i) => partnerCard(i, guia, mapsUrl)),
+    ...(deliveryText
       ? [{
           id: 'entregador', title: 'Entregador', caption: 'Endereço para entregas', group: 'principal' as const,
           icon: <CategoryIcon kind="ENTREGADOR" />, sheetTitle: 'Endereço para entregas',
-          sheet: { type: 'entregador' as const, text: guia.deliveryInstructions },
+          sheet: { type: 'entregador' as const, text: deliveryText },
         }]
       : []),
-    ...(guia.locationUrl
+    // Com coordenadas: folha com mini mapa + Waze/Google. Sem elas: link antigo. Sem nenhum: some.
+    ...(point
       ? [{
-          id: 'localizacao', title: 'Como chegar', caption: 'Abrir no mapa', group: 'principal' as const,
-          icon: <CategoryIcon kind="LOCALIZACAO" />, sheetTitle: '', href: guia.locationUrl, external: true,
+          id: 'localizacao', title: 'Como chegar', caption: 'Waze ou Google Maps', group: 'principal' as const,
+          icon: <CategoryIcon kind="LOCALIZACAO" />, sheetTitle: 'Como chegar',
+          sheet: {
+            type: 'localizacao' as const,
+            lat: point.lat,
+            lng: point.lng,
+            address: addressLine,
+            wazeHref: wazeUrl(point),
+            googleHref: googleMapsDirectionsUrl(point),
+            shareHref: googleMapsPointUrl(point),
+          },
         }]
-      : []),
+      : guia.locationUrl
+        ? [{
+            id: 'localizacao', title: 'Como chegar', caption: 'Abrir no mapa', group: 'principal' as const,
+            icon: <CategoryIcon kind="LOCALIZACAO" />, sheetTitle: '', href: guia.locationUrl, external: true,
+          }]
+        : []),
     {
       id: 'emergencia', title: 'Emergência', caption: 'Números úteis', group: 'principal', tone: 'red',
       icon: <CategoryIcon kind="EMERGENCIA" />, sheetTitle: 'Emergência',
@@ -176,7 +199,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           icon: <CategoryIcon kind="SUGESTOES" />, sheetTitle: '', href: `/guia/${id}/sugestoes`,
         }]
       : []),
-    ...dicas.map((i) => partnerCard(i, guia)),
+    ...dicas.map((i) => partnerCard(i, guia, mapsUrl)),
   ]
 
   return (

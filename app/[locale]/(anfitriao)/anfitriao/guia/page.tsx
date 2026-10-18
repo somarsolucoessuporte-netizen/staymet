@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import QRCode from 'qrcode'
 import { Card, CardContent } from '@/components/ui/card'
-import { Wifi, Users, BookOpen, Link2, ImageIcon, QrCode, Download } from 'lucide-react'
+import { Wifi, Users, BookOpen, Link2, ImageIcon, QrCode, Download, MapPin } from 'lucide-react'
 import { getCurrentDbUser, listGuiaProperties } from '@/lib/guia-access'
 import { getGuiaConfig } from '@/lib/actions/guia'
 import { getRequestOrigin } from '@/lib/request-origin'
@@ -11,6 +11,9 @@ import { GuiaPartners } from '@/components/anfitriao/GuiaPartners'
 import { GuiaShareLink } from '@/components/anfitriao/GuiaShareLink'
 import { GuiaSlugForm } from '@/components/anfitriao/GuiaSlugForm'
 import { GuiaPlaceForm } from '@/components/anfitriao/GuiaPlaceForm'
+import { GuiaLocationForm } from '@/components/anfitriao/GuiaLocationForm'
+import { propertyPoint } from '@/lib/geo'
+import { geocodeCity } from '@/lib/geocode'
 import { GuiaSuggestionsToggle } from '@/components/anfitriao/GuiaSuggestionsToggle'
 import { cn } from '@/lib/utils'
 
@@ -47,9 +50,12 @@ export default async function AnfitriaoGuiaPage({
   // Link amigável quando houver slug; o /guia/{id} continua valendo
   const guideUrl = property.slug ? `${origin}/g/${property.slug}` : `${origin}/guia/${property.id}`
   const qrOptions = { margin: 1, color: { dark: '#0F172A', light: '#FFFFFF' } }
-  const [qrSvg, qrPng] = await Promise.all([
+  const savedPoint = propertyPoint(property)
+  const [qrSvg, qrPng, cityCenter] = await Promise.all([
     QRCode.toString(guideUrl, { ...qrOptions, type: 'svg' }),
     QRCode.toDataURL(guideUrl, { ...qrOptions, width: 1024 }),
+    // Sem ponto salvo, o mapa abre na cidade do imóvel
+    savedPoint ? null : geocodeCity(property.city, property.state),
   ])
 
   return (
@@ -119,24 +125,38 @@ export default async function AnfitriaoGuiaPage({
         </CardContent>
       </Card>
 
-      {/* 2 — Foto de capa e localização */}
+      {/* 2 — Localização exata da casa */}
       <Card>
         <CardContent className="pt-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="h-4 w-4 text-accent" />
-            <h2 className="font-semibold">Foto de capa e localização</h2>
+          <div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-accent" />
+              <h2 className="font-semibold">Localização da casa</h2>
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">O hóspede abre direto no Waze ou no Google Maps.</p>
           </div>
-          <GuiaPlaceForm
-            key={property.id}
+          <GuiaLocationForm
+            key={`${property.id}-${savedPoint?.lat ?? ''}-${savedPoint?.lng ?? ''}`}
             propertyId={property.id}
-            coverImageUrl={property.coverImageUrl}
+            saved={savedPoint}
+            fallbackCenter={savedPoint ?? cityCenter?.center ?? { lat: -14.235, lng: -51.925 }}
             locationUrl={property.locationUrl}
-            address={`${property.name}, ${property.city}`}
           />
         </CardContent>
       </Card>
 
-      {/* 3 — Wi-Fi e entregas */}
+      {/* 3 — Foto de capa */}
+      <Card>
+        <CardContent className="pt-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="h-4 w-4 text-accent" />
+            <h2 className="font-semibold">Foto de capa</h2>
+          </div>
+          <GuiaPlaceForm key={property.id} propertyId={property.id} coverImageUrl={property.coverImageUrl} />
+        </CardContent>
+      </Card>
+
+      {/* 4 — Wi-Fi e entregas */}
       <Card>
         <CardContent className="pt-4 space-y-4">
           <div className="flex items-center gap-2">
@@ -154,7 +174,7 @@ export default async function AnfitriaoGuiaPage({
         </CardContent>
       </Card>
 
-      {/* 4 — Botões do guia (modo compacto) */}
+      {/* 5 — Botões do guia (modo compacto) */}
       <Card>
         <CardContent className="pt-4 space-y-4">
           <div className="flex items-center gap-2">
@@ -182,7 +202,7 @@ export default async function AnfitriaoGuiaPage({
         </CardContent>
       </Card>
 
-      {/* 5 — Caixinha de sugestões */}
+      {/* 6 — Caixinha de sugestões */}
       <Card>
         <CardContent className="pt-4">
           <GuiaSuggestionsToggle key={property.id} propertyId={property.id} enabled={property.suggestionsEnabled} />

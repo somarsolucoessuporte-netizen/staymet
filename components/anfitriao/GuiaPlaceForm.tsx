@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { ImageSquare, MapPin, X, CircleNotch, ArrowSquareOut } from '@phosphor-icons/react/ssr'
+import { ImageSquare, X, CircleNotch } from '@phosphor-icons/react/ssr'
 import { useToast } from '@/components/ui/toast'
 import { createClient } from '@/lib/supabase/client'
 import { createGuiaCoverUploadUrl, updateGuiaPlace } from '@/lib/actions/guia'
@@ -9,32 +9,26 @@ import { COVER_BUCKET, COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-
 
 const field = 'h-10 w-full min-w-0 rounded-xl border border-[#E2E8F0] bg-white px-3 text-sm focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/15'
 
-/** Foto de capa (upload ou URL) e localização no mapa do guia */
+/** Foto de capa do guia (upload ou URL). A localização fica em GuiaLocationForm. */
 export function GuiaPlaceForm({
   propertyId,
   coverImageUrl,
-  locationUrl,
-  address,
 }: {
   propertyId: string
   coverImageUrl: string | null
-  locationUrl: string | null
-  address: string
 }) {
   const { toast } = useToast()
   const [cover, setCover] = useState(coverImageUrl ?? '')
-  const [location, setLocation] = useState(locationUrl ?? '')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  const changed = cover !== (coverImageUrl ?? '') || location !== (locationUrl ?? '')
-  const searchMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+  const changed = cover !== (coverImageUrl ?? '')
 
-  const save = (patch?: { coverImageUrl?: string; locationUrl?: string }) =>
+  const save = (patch?: { coverImageUrl?: string }) =>
     start(async () => {
       setError(null)
-      const r = await updateGuiaPlace(propertyId, patch ?? { coverImageUrl: cover, locationUrl: location })
+      const r = await updateGuiaPlace(propertyId, patch ?? { coverImageUrl: cover })
       if (!r.ok) return setError(r.error)
       toast({ title: 'Guia atualizado', variant: 'success' })
     })
@@ -108,33 +102,6 @@ export function GuiaPlaceForm({
         </div>
       </div>
 
-      {/* Localização */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-[#475569]">Localização no mapa</p>
-        <div className="flex gap-2">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#F5F3FF] to-[#EDE9FE]">
-            <MapPin size={20} weight="duotone" color="#7C3AED" />
-          </span>
-          <input
-            aria-label="Link do Google Maps"
-            value={location}
-            onChange={(e) => setLocation(e.target.value.trim())}
-            inputMode="url"
-            placeholder="https://maps.app.goo.gl/…"
-            className={field}
-          />
-          {location && (
-            <a href={location} target="_blank" rel="noopener noreferrer" aria-label="Testar link do mapa" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#F1F5FF]">
-              <ArrowSquareOut size={18} weight="bold" color="#1A56DB" />
-            </a>
-          )}
-        </div>
-        <p className="text-[11px] text-[#94A3B8]">
-          No Google Maps, abra a casa, toque em Compartilhar e cole o link aqui.{' '}
-          <a href={searchMaps} target="_blank" rel="noopener noreferrer" className="font-medium text-[#1A56DB]">Buscar o endereço no Maps</a>
-        </p>
-      </div>
-
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700 ring-1 ring-red-200">{error}</p>}
 
       <button
@@ -143,7 +110,7 @@ export function GuiaPlaceForm({
         disabled={pending || uploading || !changed}
         className="h-11 w-full rounded-xl bg-[#1A56DB] text-sm font-semibold text-white disabled:opacity-40"
       >
-        {pending ? 'Salvando…' : 'Salvar foto e localização'}
+        {pending ? 'Salvando…' : 'Salvar foto'}
       </button>
     </div>
   )

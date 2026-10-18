@@ -1,10 +1,18 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { NavigationArrow, Copy as CopyIcon } from '@phosphor-icons/react/ssr'
 import { ChevronDown, Copy, ExternalLink, MapPin, Phone, Send } from 'lucide-react'
 import { GuiaSheet } from '@/components/guia/GuiaSheet'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
+
+// Leaflet só no navegador e só quando a folha "Como chegar" abre
+const LeafletMap = dynamic(() => import('@/components/shared/LeafletMap').then((m) => m.LeafletMap), {
+  ssr: false,
+  loading: () => <div className="h-[160px] animate-pulse rounded-2xl bg-[#EEF2F7]" />,
+})
 
 // Dados montados no servidor (app/guia/[id]/page.tsx); ícones já vêm renderizados
 export type GuiaSheetData =
@@ -23,6 +31,7 @@ export type GuiaSheetData =
     }
   | { type: 'dica'; name: string; description: string | null; externalUrl: string | null; whatsappUrl: string | null; phone: string | null }
   | { type: 'emergencia'; lines: { label: string; value: string; href: string; kind: string; external?: boolean }[] }
+  | { type: 'localizacao'; lat: number; lng: number; address: string; wazeHref: string; googleHref: string; shareHref: string }
 
 export type GuiaCardData = {
   id: string
@@ -132,6 +141,8 @@ function SheetBody({ card, sheet: s }: { card: GuiaCardData; sheet: GuiaSheetDat
       return <DicaSheet icon={card.icon} data={s} />
     case 'emergencia':
       return <EmergenciaSheet lines={s.lines} />
+    case 'localizacao':
+      return <LocalizacaoSheet data={s} />
   }
 }
 
@@ -319,6 +330,27 @@ function EmergenciaSheet({ lines }: { lines: Extract<GuiaSheetData, { type: 'eme
           </a>
         </div>
       ))}
+    </div>
+  )
+}
+
+function LocalizacaoSheet({ data }: { data: Extract<GuiaSheetData, { type: 'localizacao' }> }) {
+  const point = { lat: data.lat, lng: data.lng }
+  return (
+    <div className="space-y-4">
+      <LeafletMap center={point} marker={point} zoom={16} interactive={false} className="h-[160px] rounded-2xl ring-1 ring-[#E2E8F0]" />
+      {data.address && <p className="text-sm leading-snug text-[#334155]">{data.address}</p>}
+      <div className="space-y-2">
+        <a href={data.wazeHref} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#1A56DB]`}>
+          <NavigationArrow size={18} weight="fill" /> Abrir no Waze
+        </a>
+        <a href={data.googleHref} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#0F172A]`}>
+          <NavigationArrow size={18} weight="fill" /> Abrir no Google Maps
+        </a>
+        <GuiaCopyButton text={data.shareHref} toast="Localização copiada" className={`${secondaryBtn} w-full`}>
+          <CopyIcon size={16} weight="bold" /> Copiar localização
+        </GuiaCopyButton>
+      </div>
     </div>
   )
 }

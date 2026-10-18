@@ -107,6 +107,8 @@ model Property {
   deliveryInstructions String? // instruções para entregadores (como chegar, referência, etc.)
   slug                 String?  @unique // link amigável do guia: /g/<slug>
   locationUrl          String?  // link do Google Maps da casa
+  latitude             Float?   // ponto exato da casa (marcado pelo anfitrião)
+  longitude            Float?
   suggestionsEnabled   Boolean  @default(true) // mostra a caixinha de sugestões no guia
   active        Boolean      @default(true)
   createdAt     DateTime     @default(now())

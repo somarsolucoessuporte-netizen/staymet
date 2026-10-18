@@ -7,6 +7,7 @@ import { getCurrentDbUser, canEditGuia } from '@/lib/guia-access'
 import { ensurePublicBucket } from '@/lib/supabase/admin'
 import { COVER_BUCKET, COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
 import { slugify } from '@/lib/slug'
+import { isGoogleMapsHost, isValidLatLng, parseLatLngFromText, type LatLng } from '@/lib/geo'
 import { PARTNER_CATEGORIES, PARTNER_CATEGORY_VALUES } from '@/lib/guia'
 
 type ActionResult = { ok: true } | { ok: false; error: string }
@@ -82,7 +83,8 @@ export async function getGuiaConfig(propertyId: string) {
       select: {
         id: true, name: true,
         wifiName: true, wifiPassword: true, deliveryInstructions: true, suggestionsEnabled: true,
-        slug: true, locationUrl: true, coverImageUrl: true, city: true,
+        slug: true, locationUrl: true, coverImageUrl: true, city: true, state: true, address: true,
+        latitude: true, longitude: true,
         partners: {
           include: { partner: true },
           orderBy: [{ partner: { sortOrder: 'asc' } }, { partner: { name: 'asc' } }],
@@ -346,5 +348,83 @@ export async function togglePartnerActive(
     return { ok: true }
   } catch (e) {
     return fail(e)
+  }
+}
+
+// ─── Localização exata da casa ───
+
+/** Salva (ou remove, com null) o ponto da casa. O link colado, se houver, vira o locationUrl de reserva. */
+export async function updateGuiaLocation(
+  propertyId: string,
+  point: LatLng | null,
+  sourceUrl?: string | null,
+): Promise<ActionResult> {
+  try {
+    await assertAccess(propertyId)
+    if (point && !isValidLatLng(point.lat, point.lng)) return { ok: false, error: 'Coordenadas inválidas.' }
+    const data: { latitude: number | null; longitude: number | null; locationUrl?: string | null } = {
+      latitude: point ? Math.round(point.lat * 1e7) / 1e7 : null,
+      longitude: point ? Math.round(point.lng * 1e7) / 1e7 : null,
+    }
+    if (sourceUrl !== undefined) {
+      const url = normalizeUrl(sourceUrl?.trim() || null)
+      if (url !== undefined) data.locationUrl = url
+    }
+    await prisma.property.update({ where: { id: propertyId }, data })
+    refreshGuia(propertyId)
+    return { ok: true }
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+/**
+ * Lê lat/lng de um link do Google Maps. Links curtos (maps.app.goo.gl) são resolvidos aqui no servidor,
+ * seguindo os redirecionamentos só enquanto o destino for do Google.
+ */
+export async function resolveMapsLink(
+  propertyId: string,
+  link: string,
+): Promise<{ ok: true; point: LatLng } | { ok: false; error: string }> {
+  try {
+    await assertAccess(propertyId)
+    const direct = parseLatLngFromText(link)
+    if (direct) return { ok: true, point: direct }
+
+    let url: URL
+    try {
+      url = new URL(link.trim())
+    } catch {
+      return { ok: false, error: 'Cole um link do Google Maps (ou "latitude, longitude").' }
+    }
+    if (!isGoogleMapsHost(url.hostname)) return { ok: false, error: 'Esse link não é do Google Maps.' }
+
+    for (let hop = 0; hop < 6; hop++) {
+      const res = await fetch(url, {
+        redirect: 'manual',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Staymet/1.0)' },
+        signal: AbortSignal.timeout(6000),
+        cache: 'no-store',
+      })
+      const location = res.headers.get('location')
+      if (res.status >= 300 && res.status < 400 && location) {
+        url = new URL(location, url)
+        if (!isGoogleMapsHost(url.hostname)) break
+        const found = parseLatLngFromText(url.toString())
+        if (found) return { ok: true, point: found }
+        continue
+      }
+      // Página final: às vezes as coordenadas só aparecem no HTML
+      if (res.ok) {
+        const html = (await res.text()).slice(0, 400_000)
+        const found = parseLatLngFromText(url.toString()) ?? parseLatLngFromText(html.match(/https:\/\/www\.google\.[^"'\s]*@-?\d[^"'\s]*/)?.[0] ?? '')
+        if (found) return { ok: true, point: found }
+      }
+      break
+    }
+    return { ok: false, error: 'Não achei as coordenadas nesse link. Marque o ponto no mapa ou use sua localização atual.' }
+  } catch (e) {
+    if (e instanceof Error && e.name === 'TimeoutError') return { ok: false, error: 'O Google Maps demorou a responder. Tente de novo.' }
+    return fail(e) as { ok: false; error: string }
   }
 }
