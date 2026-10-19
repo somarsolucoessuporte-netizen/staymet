@@ -2,12 +2,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Building2, Users, AlertCircle, BarChart3, Settings, ExternalLink,
-  ChevronRight, Eye, MessageSquareWarning, SlidersHorizontal, Link2, BookOpen, MapPin,
+  ChevronRight, Eye, MessageSquareWarning, SlidersHorizontal, Link2, BookOpen, MapPin, CalendarDays,
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getRequestOrigin } from '@/lib/request-origin'
 import { getCurrentDbUser } from '@/lib/guia-access'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
+import { getConflicts } from '@/lib/agenda-server'
+import { ConflictCard } from '@/components/agenda/ConflictCard'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Acesso já restrito a ADMINISTRADOR pelo layout (admin)
@@ -50,6 +52,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
     getRequestOrigin(),
   ])
   const firstName = dbUser?.name.split(' ')[0] ?? 'Admin'
+  const conflicts = await getConflicts(properties.map((p) => p.id))
 
   const statCards = [
     { title: 'Clientes',       value: stats.totalClients },
@@ -62,6 +65,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
     { icon: Users,       title: 'Gestão de Usuários',  desc: 'Listar, criar e gerenciar usuários do sistema.', href: `/${locale}/admin/usuarios`,   iconCls: 'bg-blue-50 text-[#1A56DB]' },
     { icon: Building2,   title: 'Gestão de Imóveis',   desc: 'Visualizar todos os imóveis e seus status.',      href: `/${locale}/admin/imoveis`,    iconCls: 'bg-emerald-50 text-emerald-600' },
     { icon: MessageSquareWarning, title: 'Ocorrências e sugestões', desc: 'Problemas da operação e a caixinha dos hóspedes.', href: `/${locale}/admin/ocorrencias`, iconCls: 'bg-red-50 text-red-600' },
+    { icon: CalendarDays, title: 'Agenda e canais',    desc: 'Calendário único com Airbnb, Booking, Vrbo e diretas.', href: `/${locale}/anfitriao/agenda`, iconCls: 'bg-sky-50 text-sky-600' },
     { icon: AlertCircle, title: 'Vistorias Pendentes', desc: 'Validar vistorias digitais de entrada/saída.',    href: `/${locale}/admin/vistorias`,  iconCls: 'bg-orange-50 text-orange-600' },
     // Página ainda não existe: fica desabilitado até ser criada
     { icon: BarChart3,   title: 'Relatórios',          desc: 'Relatórios de ocupação, receita e performance.',  href: null,                          iconCls: 'bg-purple-50 text-purple-600' },
@@ -104,6 +108,23 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
             </div>
           ))}
         </div>
+
+        {/* CONFLITOS DE DATAS (agenda) */}
+        {conflicts.length > 0 && (
+          <section>
+            <SectionTitle icon={AlertCircle}>Precisa da sua atenção</SectionTitle>
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+              {conflicts.map((c) => (
+                <ConflictCard
+                  key={`${c.a.id}-${c.b.id}`}
+                  conflict={c}
+                  showProperty
+                  agendaHref={`/${locale}/anfitriao/agenda?propertyId=${c.propertyId}&mes=${c.a.startDate.slice(0, 7)}`}
+                />
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* GUIA DO HÓSPEDE */}
         <section>

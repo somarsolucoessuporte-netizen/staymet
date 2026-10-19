@@ -32,6 +32,33 @@ enum ReservationStatus {
   CANCELADA
 }
 
+enum BookingSource {
+  AIRBNB
+  BOOKING
+  VRBO
+  OLX
+  DIRETO
+  OUTRO
+  BLOQUEIO
+}
+
+enum BookingStatus {
+  CONFIRMADA
+  CANCELADA
+}
+
+enum ChannelPlatform {
+  AIRBNB
+  BOOKING
+  VRBO
+  OUTRO
+}
+
+enum ChannelSyncStatus {
+  OK
+  ERRO
+}
+
 enum TaskStatus {
   PENDENTE
   EM_ANDAMENTO
@@ -85,6 +112,7 @@ model User {
   checkOuts         Reservation[]  @relation("CheckedOutBy")
   createdMagicLinks MagicLink[]    @relation("MagicLinkCreator")
   createdExpenses   Expense[]      @relation("ExpenseCreator")
+  createdBookings   Booking[]      @relation("BookingCreator")
 }
 
 model Property {
@@ -110,6 +138,7 @@ model Property {
   latitude             Float?   // ponto exato da casa (marcado pelo anfitrião)
   longitude            Float?
   suggestionsEnabled   Boolean  @default(true) // mostra a caixinha de sugestões no guia
+  icalToken            String?  @unique // token secreto dos links .ics de exportação (Canais)
   active        Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -133,6 +162,8 @@ model Property {
   inspections  Inspection[]
   expenses     Expense[]
   statements   OwnerStatement[]
+  bookings     Booking[]
+  channels     CalendarChannel[]
 }
 
 model PropertyUser {
@@ -407,4 +438,52 @@ model Notification {
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
+}
+
+// ─── Canais (iCal) ───
+
+/// Calendário importado de uma plataforma (Airbnb, Booking, Vrbo...)
+model CalendarChannel {
+  id         String             @id @default(cuid())
+  platform   ChannelPlatform
+  label      String
+  importUrl  String
+  active     Boolean            @default(true)
+  lastSyncAt DateTime?
+  lastStatus ChannelSyncStatus?
+  lastError  String?
+  createdAt  DateTime           @default(now())
+
+  propertyId String
+  property   Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  bookings   Booking[]
+
+  @@index([propertyId])
+}
+
+/// Ocupação do calendário: reservas dos canais, diretas e bloqueios. endDate = dia do check-out (exclusivo)
+model Booking {
+  id           String        @id @default(cuid())
+  source       BookingSource
+  externalUid  String?
+  startDate    DateTime      @db.Date
+  endDate      DateTime      @db.Date
+  status       BookingStatus @default(CONFIRMADA)
+  guestName    String?
+  guestContact String?
+  guestsCount  Int?
+  amount       Decimal?      @db.Decimal(10, 2)
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  propertyId  String
+  property    Property         @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  channelId   String?
+  channel     CalendarChannel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   User?            @relation("BookingCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([channelId, externalUid])
+  @@index([propertyId, startDate])
 }

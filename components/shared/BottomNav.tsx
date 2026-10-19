@@ -15,6 +15,7 @@ import {
   MessageSquare,
   ListTodo,
   BookOpen,
+  CalendarDays,
 } from 'lucide-react'
 
 type NavItem = {
@@ -37,10 +38,11 @@ const proprietarioNav: NavItem[] = [
   { href: '/proprietario/relatorios', icon: DollarSign, label: 'Relatórios' },
 ]
 
-// Check-in/Check-out saíram do menu: fase 2 – integração iCal Airbnb.
+// Agenda: calendário único por imóvel (canais via iCal + reservas diretas).
 // As rotas /anfitriao/checkin/[reservationId] e /anfitriao/checkout/[reservationId] continuam existindo.
 const anfitriaoNav: NavItem[] = [
   { href: '/anfitriao/dashboard', icon: LayoutDashboard, label: 'Início' },
+  { href: '/anfitriao/agenda', icon: CalendarDays, label: 'Agenda' },
   { href: '/anfitriao/imoveis', icon: Building2, label: 'Imóveis' },
   { href: '/anfitriao/ocorrencias', icon: AlertTriangle, label: 'Ocorrências' },
   { href: '/anfitriao/guia', icon: BookOpen, label: 'Guia' },

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Eye, Link2, SlidersHorizontal, MapPin, AlertCircle } from 'lucide-react'
+import { WarningCircle, CaretRight } from '@phosphor-icons/react/ssr'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 
 export type PropertyGuideInfo = {
@@ -10,6 +11,8 @@ export type PropertyGuideInfo = {
   coverImageUrl: string | null
   hasWifi: boolean
   activeButtons: number
+  /** Conflitos de datas na agenda (reservas/bloqueios sobrepostos) */
+  conflicts?: number
 }
 
 /** O que falta para o guia ficar completo (Wi-Fi, foto de capa, pelo menos 1 botão ativo) */
@@ -46,6 +49,17 @@ export function PropertyGuideCard({ property: p, locale, origin }: { property: P
       </div>
 
       <div className="space-y-2 p-4">
+        {!!p.conflicts && (
+          <Link
+            href={`/${locale}/anfitriao/agenda?propertyId=${p.id}`}
+            className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white active:scale-[0.99]"
+          >
+            <WarningCircle size={15} weight="fill" className="shrink-0" />
+            <span className="flex-1">Conflito de datas{p.conflicts > 1 ? ` (${p.conflicts})` : ''}</span>
+            <span className="font-semibold text-white/85">Ver agenda</span>
+            <CaretRight size={13} weight="bold" />
+          </Link>
+        )}
         {missing.length > 0 && (
           <p className="flex items-start gap-1.5 rounded-xl bg-orange-50 px-3 py-2 text-xs font-medium text-orange-700">
             <AlertCircle size={14} className="mt-px shrink-0" />

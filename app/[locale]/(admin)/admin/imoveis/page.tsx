@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Plus, Search, Pencil, Eye, SlidersHorizontal, MapPin, User } from 'lucide-react'
+import { ArrowLeft, Plus, Search, Pencil, Eye, SlidersHorizontal, MapPin, User, CalendarDays } from 'lucide-react'
 import type { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { propertyTypeLabel } from '@/lib/property-types'
@@ -120,6 +120,9 @@ export default async function ImoveisPage({
                     </a>
                     <Link href={`/${locale}/anfitriao/guia?propertyId=${p.id}`} className={`${btn} bg-[#F1F5FF] text-[#1A56DB]`}>
                       <SlidersHorizontal size={14} /> Configurar botões
+                    </Link>
+                    <Link href={`/${locale}/anfitriao/agenda?propertyId=${p.id}`} className={`${btn} bg-[#F1F5FF] text-[#1A56DB]`}>
+                      <CalendarDays size={14} /> Agenda
                     </Link>
                   </>
                 )}

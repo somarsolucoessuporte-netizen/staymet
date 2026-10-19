@@ -7,9 +7,13 @@ import { getOccurrenceSummary } from '@/lib/occurrence-summary'
 import { getRequestOrigin } from '@/lib/request-origin'
 import { PropertyGuideCard } from '@/components/anfitriao/PropertyGuideCard'
 import { OriginBadge } from '@/components/shared/OriginBadge'
+import { SignIn, SignOut } from '@phosphor-icons/react/ssr'
+import { getConflicts, getUpcomingMovements } from '@/lib/agenda-server'
+import { todayISO } from '@/lib/agenda'
+import { ConflictCard } from '@/components/agenda/ConflictCard'
 
-// Fase 1: sem check-in/check-out (reservas virão da integração iCal do Airbnb).
-// O painel foca no guia do hóspede, sugestões e ocorrências.
+// Check-ins/check-outs vêm da Agenda (canais iCal + reservas diretas).
+// O painel também mostra guia do hóspede, sugestões, ocorrências e conflitos de datas.
 
 function capitalize(s: string) {
   return s ? s.charAt(0).toLocaleUpperCase('pt-BR') + s.slice(1) : s
@@ -35,7 +39,17 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
   if (!dbUser) return null
 
   const properties = await getAnfitriaoProperties(dbUser)
-  const [summary, origin] = await Promise.all([getOccurrenceSummary(dbUser), getRequestOrigin()])
+  const propertyIds = properties.map((p) => p.id)
+  const [summary, origin, conflicts, moves] = await Promise.all([
+    getOccurrenceSummary(dbUser),
+    getRequestOrigin(),
+    getConflicts(propertyIds),
+    getUpcomingMovements(propertyIds, 0),
+  ])
+  const todayIso = todayISO()
+  const checkinsToday = moves.filter((m) => m.kind === 'checkin' && m.date === todayIso).length
+  const checkoutsToday = moves.filter((m) => m.kind === 'checkout' && m.date === todayIso).length
+  const agendaHref = `/${locale}/anfitriao/agenda`
   const activeButtons = properties.reduce((n, p) => n + p.activeButtons, 0)
 
   const firstName = capitalize(dbUser.name.trim().split(' ')[0] ?? '')
@@ -67,7 +81,27 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
 
       <div className="-mt-9 space-y-7 px-4">
         {/* NÚMEROS */}
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5">
+          {[
+            { label: 'Check-ins hoje', value: checkinsToday, Icon: SignIn, iconCls: 'bg-emerald-50 text-emerald-600' },
+            { label: 'Check-outs hoje', value: checkoutsToday, Icon: SignOut, iconCls: 'bg-orange-50 text-orange-600' },
+          ].map((s) => (
+            <Link
+              key={s.label}
+              href={agendaHref}
+              className="flex items-center gap-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-8px_rgba(26,86,219,0.25)] ring-1 ring-[#1A56DB]/[0.06] transition active:scale-[0.97]"
+            >
+              <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${s.iconCls}`}>
+                <s.Icon size={20} weight="bold" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-2xl font-extrabold leading-none tabular-nums">{s.value}</span>
+                <span className="mt-1 block text-[12px] font-medium leading-tight text-[#64748B]">{s.label}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+        <div className="!mt-2.5 grid grid-cols-3 gap-2.5">
           {stats.map((s) => (
             <Link
               key={s.label}
@@ -108,7 +142,19 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
           <h2 className="mb-3 flex items-center gap-2 pl-1 text-base font-extrabold">
             <AlertTriangle size={18} className="text-[#1A56DB]" /> Precisa da sua atenção
           </h2>
-          {summary.attention.length === 0 ? (
+          {conflicts.length > 0 && (
+            <div className="mb-3 space-y-2">
+              {conflicts.map((c) => (
+                <ConflictCard
+                  key={`${c.a.id}-${c.b.id}`}
+                  conflict={c}
+                  showProperty={properties.length > 1}
+                  agendaHref={`${agendaHref}?propertyId=${c.propertyId}&mes=${c.a.startDate.slice(0, 7)}`}
+                />
+              ))}
+            </div>
+          )}
+          {summary.attention.length === 0 && conflicts.length > 0 ? null : summary.attention.length === 0 ? (
             <p className="rounded-3xl bg-white p-5 text-center text-sm text-[#64748B] ring-1 ring-black/5">
               Tudo em ordem por aqui.
             </p>
