@@ -2,6 +2,7 @@ import { Home, MapPin, Users } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+import { formatCityState } from '@/lib/utils'
 
 interface PropertyCardProps {
   id: string
@@ -55,7 +56,7 @@ export function PropertyCard({
         <h3 className="font-semibold text-foreground text-sm leading-tight">{name}</h3>
         <div className="flex items-center gap-1 mt-1 text-muted-foreground">
           <MapPin className="h-3 w-3" />
-          <span className="text-xs">{city}, {state}</span>
+          <span className="text-xs">{formatCityState(city, state)}</span>
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-xs text-muted-foreground">{typeLabels[type] ?? type}</span>

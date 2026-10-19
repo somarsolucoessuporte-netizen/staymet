@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { HospedeLayout } from '@/components/hospede/HospedeLayout'
 import { Logo } from '@/components/ui/Logo'
+import { formatPersonName } from '@/lib/utils'
 
 export default function HospedePage() {
   const params = useParams()
@@ -154,7 +155,7 @@ export default function HospedePage() {
                 className="flex items-center gap-3 px-4 py-3 border-t border-gray-50 hover:bg-gray-50 transition-colors"
               >
                 <MapPin size={14} strokeWidth={1.5} className="text-[#1A56DB] flex-shrink-0" />
-                <span className="text-gray-600 text-xs flex-1">{property.address}, {property.city}</span>
+                <span className="text-gray-600 text-xs flex-1">{property.address}, {formatPersonName(property.city)}</span>
                 <ChevronRight size={14} strokeWidth={1.5} className="text-gray-300" />
               </a>
             )}

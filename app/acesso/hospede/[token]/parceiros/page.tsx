@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { HospedeLayout } from '@/components/hospede/HospedeLayout'
 import { HospedeHeader } from '@/components/hospede/HospedeHeader'
 import { MapPin, ExternalLink, Utensils, Waves, ShoppingBag, Coffee } from 'lucide-react'
+import { formatPersonName } from '@/lib/utils'
 
 const CATEGORIES = [
   { icon: Utensils,    label: 'Restaurantes',  color: '#F59E0B', bg: '#FFFBEB' },
@@ -44,7 +45,7 @@ export default function ParceirosPage() {
             <div className="flex-1">
               <p className="text-white font-bold text-base">Explorar no mapa</p>
               <p className="text-white/50 text-xs mt-0.5">
-                {property?.city ? `Ver o que há perto de ${property.city}` : 'Ver atrações próximas'}
+                {property?.city ? `Ver o que há perto de ${formatPersonName(property.city)}` : 'Ver atrações próximas'}
               </p>
             </div>
             <ExternalLink size={16} strokeWidth={1.5} className="text-white/40" />

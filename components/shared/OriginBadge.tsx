@@ -1,6 +1,6 @@
 import { Suitcase, Wrench, Broom, House, ClipboardText, User, Star, Archive } from '@phosphor-icons/react/ssr'
 import type { Icon } from '@phosphor-icons/react'
-import { cn } from '@/lib/utils'
+import { cn, formatFirstName } from '@/lib/utils'
 
 // Selo de origem de ocorrências/sugestões (quem registrou)
 const ORIGINS: Record<string, { Icon: Icon; label: string; cls: string }> = {
@@ -28,7 +28,7 @@ export function OriginBadge({
   const o = ORIGINS[source] ?? ORIGINS.PAINEL
   let label = o.label
   let Glyph = o.Icon
-  if (source === 'HOSPEDE' && name) label = `${o.label} ${name.split(' ')[0]}`
+  if (source === 'HOSPEDE' && name) label = `${o.label} ${formatFirstName(name)}`
   if (source === 'PRESTADOR' && prestadorKind === 'LIMPEZA') { label = 'Limpeza'; Glyph = Broom }
   if (source === 'PRESTADOR' && prestadorKind === 'MANUTENCAO') label = 'Manutenção'
   return (

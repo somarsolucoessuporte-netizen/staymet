@@ -8,6 +8,7 @@ import { GuiaSplash } from '@/components/guia/GuiaSplash'
 import { GuiaGrid, type GuiaCardData } from '@/components/guia/GuiaGrid'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
 import { SomarFooter } from '@/components/shared/SomarFooter'
+import { formatPersonName } from '@/lib/utils'
 
 // Guia público do hóspede: um link por imóvel, sem login.
 // O anfitrião configura tudo em /anfitriao/guia. Cada botão abre um bottom sheet explicando o que faz.
@@ -135,7 +136,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const point = propertyPoint(guia)
   const mapsUrl = point ? googleMapsPointUrl(point) : null
   const deliveryText = buildDeliveryText(guia.deliveryInstructions, mapsUrl)
-  const addressLine = [guia.address, guia.city && guia.state ? `${guia.city}/${guia.state}` : guia.city].filter(Boolean).join(' – ')
+  const addressLine = [guia.address, guia.city && guia.state ? `${formatPersonName(guia.city)}/${guia.state.toUpperCase()}` : formatPersonName(guia.city)].filter(Boolean).join(' – ')
 
   const emergencyLines = [
     ...EMERGENCIA.map((e) => ({ label: e.label, value: e.num, href: `tel:${e.num}`, kind: e.kind })),

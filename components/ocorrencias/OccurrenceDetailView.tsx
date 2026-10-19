@@ -11,7 +11,7 @@ import {
 import { OriginBadge } from '@/components/shared/OriginBadge'
 import { OccurrenceCategoryIcon } from '@/components/ocorrencias/OccurrenceCategoryIcon'
 import { OccurrenceControls } from '@/components/ocorrencias/OccurrenceControls'
-import { cn } from '@/lib/utils'
+import { cn, formatFirstName } from '@/lib/utils'
 
 const EVENT_DOT: Record<string, string> = {
   CRIADA: 'bg-[#1A56DB]', RESOLVIDA: 'bg-emerald-500', ARQUIVADA: 'bg-gray-400', REABERTA: 'bg-amber-500',
@@ -58,7 +58,7 @@ export async function OccurrenceDetailView({ id, basePath }: { id: string; baseP
   const phone = occ.reportedBy?.phone ?? occ.reservation?.guestPhone ?? null
   const phoneDigits = phone?.replace(/\D/g, '') ?? ''
   const waDigits = phoneDigits.length === 10 || phoneDigits.length === 11 ? `55${phoneDigits}` : phoneDigits
-  const replyText = `Olá, ${name?.split(' ')[0] ?? ''}! Aqui é da ${occ.property.name}. Obrigado pela sua mensagem sobre "${occ.title.replace(SUGGESTION_TITLE_PREFIX, '')}".`
+  const replyText = `Olá, ${formatFirstName(name)}! Aqui é da ${occ.property.name}. Obrigado pela sua mensagem sobre "${occ.title.replace(SUGGESTION_TITLE_PREFIX, '')}".`
   const whatsappHref = waDigits.length >= 12 ? `https://wa.me/${waDigits}?text=${encodeURIComponent(replyText)}` : null
   const mailHref = email ? `mailto:${email}?subject=${encodeURIComponent(`${occ.property.name} – sua mensagem`)}&body=${encodeURIComponent(replyText)}` : null
 

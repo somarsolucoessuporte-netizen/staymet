@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { propertyTypeLabel } from '@/lib/property-types'
 import { PropertyStatusButton } from '@/components/admin/PropertyStatusButton'
 import { SomarFooter } from '@/components/shared/SomarFooter'
+import { formatCityState } from '@/lib/utils'
 
 // Acesso restrito a ADMINISTRADOR pelo layout (admin)
 
@@ -103,7 +104,7 @@ export default async function ImoveisPage({
                   </div>
                   <p className="text-xs font-medium text-[#1A56DB]">{propertyTypeLabel(p.type)}</p>
                   <p className="flex flex-wrap gap-x-3 text-xs text-[#64748B]">
-                    <span className="inline-flex items-center gap-1"><MapPin size={11} /> {p.city}, {p.state}</span>
+                    <span className="inline-flex items-center gap-1"><MapPin size={11} /> {formatCityState(p.city, p.state)}</span>
                     <span className="inline-flex items-center gap-1"><User size={11} /> {p.owner.name}</span>
                   </p>
                 </div>

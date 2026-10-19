@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { HospedeLayout } from '@/components/hospede/HospedeLayout'
 import { HospedeHeader } from '@/components/hospede/HospedeHeader'
 import { Phone, MapPin, Clock, Truck, ChevronRight } from 'lucide-react'
+import { formatCityState } from '@/lib/utils'
 
 const EMERGENCY = [
   { label: 'SAMU',           number: '192', color: '#EF4444', bg: '#FEF2F2' },
@@ -56,7 +57,7 @@ export default function InformacoesPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900 text-sm">{property.address}</p>
-                    <p className="text-gray-400 text-xs mt-0.5">{property.city}, {property.state}</p>
+                    <p className="text-gray-400 text-xs mt-0.5">{formatCityState(property.city, property.state)}</p>
                   </div>
                   <ChevronRight size={16} strokeWidth={1.5} className="text-gray-300" />
                 </a>

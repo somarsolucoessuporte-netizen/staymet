@@ -9,6 +9,7 @@ import {
   MapPin, Clock, Camera, CheckCircle, Navigation,
   Wrench, Sparkles, AlertTriangle, ClipboardCheck,
 } from 'lucide-react'
+import { formatPersonName, formatCityState } from '@/lib/utils'
 
 const taskTypeConfig: Record<string, { color: string; label: string; Icon: typeof CheckCircle }> = {
   LIMPEZA:         { color: '#3B82F6', label: 'Limpeza',           Icon: Sparkles },
@@ -136,7 +137,7 @@ export default function PrestadorMagicPage() {
           <Image src="/icone.png" alt="" width={28} height={28} className="rounded-lg object-contain shadow-md shadow-[#1A56DB]/30" />
           <span className="text-white font-semibold" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>Anfitrião Management</span>
         </div>
-        <p className="text-white/50 text-sm">Olá, {data?.prestadorName ?? 'prestador'}!</p>
+        <p className="text-white/50 text-sm">Olá, {data?.prestadorName ? formatPersonName(data.prestadorName) : 'prestador'}!</p>
         <h1 className="text-white text-xl font-bold mt-0.5" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
           Sua tarefa de hoje
         </h1>
@@ -171,7 +172,7 @@ export default function PrestadorMagicPage() {
                 <div>
                   <p className="font-semibold text-gray-900 text-sm">{property.name}</p>
                   <p className="text-gray-500 text-xs mt-0.5">{property.address}</p>
-                  <p className="text-gray-500 text-xs">{property.city}, {property.state}</p>
+                  <p className="text-gray-500 text-xs">{formatCityState(property.city, property.state)}</p>
                 </div>
               </div>
             </div>

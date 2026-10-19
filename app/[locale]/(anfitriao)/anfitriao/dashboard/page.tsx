@@ -11,6 +11,7 @@ import { SignIn, SignOut } from '@phosphor-icons/react/ssr'
 import { getConflicts, getUpcomingMovements } from '@/lib/agenda-server'
 import { todayISO } from '@/lib/agenda'
 import { ConflictCard } from '@/components/agenda/ConflictCard'
+import { formatFirstName } from '@/lib/utils'
 
 // Check-ins/check-outs vêm da Agenda (canais iCal + reservas diretas).
 // O painel também mostra guia do hóspede, sugestões, ocorrências e conflitos de datas.
@@ -52,7 +53,7 @@ export default async function AnfitriaoDashboardPage({ params }: { params: Promi
   const agendaHref = `/${locale}/anfitriao/agenda`
   const activeButtons = properties.reduce((n, p) => n + p.activeButtons, 0)
 
-  const firstName = capitalize(dbUser.name.trim().split(' ')[0] ?? '')
+  const firstName = formatFirstName(dbUser.name)
   const today = capitalize(
     new Intl.DateTimeFormat('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'America/Fortaleza' }).format(new Date()),
   )

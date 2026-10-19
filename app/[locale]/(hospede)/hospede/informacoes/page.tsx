@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Wifi, Clock, FileText, MapPin, Phone, Copy, Truck } from 'lucide-react'
 import { CopyTextButton } from '@/components/hospede/CopyTextButton'
+import { formatCityState } from '@/lib/utils'
 
 async function getPropertyFromCode(code?: string) {
   if (!code) return null
@@ -94,7 +95,7 @@ export default async function GuestInformacoesPage({
             <span className="font-semibold">Endereço</span>
           </div>
           <p className="text-sm text-foreground">{property.address}</p>
-          <p className="text-sm text-muted-foreground">{property.city}, {property.state}</p>
+          <p className="text-sm text-muted-foreground">{formatCityState(property.city, property.state)}</p>
         </CardContent>
       </Card>
 

@@ -2,35 +2,32 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Building2, Users, AlertCircle, BarChart3, Settings, ExternalLink,
-  ChevronRight, Eye, MessageSquareWarning, SlidersHorizontal, Link2, BookOpen, MapPin, CalendarDays,
+  ChevronRight, Eye, MessageSquareWarning, SlidersHorizontal, Link2, BookOpen, MapPin, CalendarDays, LogIn,
 } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
 import { getRequestOrigin } from '@/lib/request-origin'
 import { getCurrentDbUser } from '@/lib/guia-access'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
-import { getConflicts } from '@/lib/agenda-server'
+import { getConflicts, getUpcomingMovements } from '@/lib/agenda-server'
+import { addDays, isoToDate, todayISO, SOURCE_META } from '@/lib/agenda'
+import { SUGGESTION_CATEGORY } from '@/lib/occurrences'
+import { formatCityState, formatFirstName } from '@/lib/utils'
 import { ConflictCard } from '@/components/agenda/ConflictCard'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
 // Acesso já restrito a ADMINISTRADOR pelo layout (admin)
 
-// Mesmos números de /api/admin/stats, lidos direto no servidor
+// Reservas e check-ins vêm da Agenda (model Booking), como no dashboard do anfitrião
 async function getStats() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
-  const [totalClients, totalProperties, activeReservationsToday, pendingInspections] = await Promise.all([
+  const [totalClients, totalProperties, suggestionsNew] = await Promise.all([
     prisma.user.count({ where: { role: 'PROPRIETARIO' } }),
     prisma.property.count({ where: { active: true } }),
-    prisma.reservation.count({
-      where: { checkIn: { lte: tomorrow }, checkOut: { gte: today }, status: 'EM_ANDAMENTO' },
-    }),
-    prisma.task.count({ where: { type: 'VISTORIA_ENTRADA', status: 'PENDENTE' } }),
+    prisma.occurrence.count({ where: { category: SUGGESTION_CATEGORY, status: 'ABERTA', archivedAt: null } }),
   ])
-  return { totalClients, totalProperties, activeReservationsToday, pendingInspections }
+  return { totalClients, totalProperties, suggestionsNew }
 }
+
+const shortDay = new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'UTC' })
 
 async function getGuiaProperties() {
   return prisma.property.findMany({
@@ -51,14 +48,31 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
     getGuiaProperties(),
     getRequestOrigin(),
   ])
-  const firstName = dbUser?.name.split(' ')[0] ?? 'Admin'
-  const conflicts = await getConflicts(properties.map((p) => p.id))
+  const firstName = formatFirstName(dbUser?.name) || 'Admin'
+  const propertyIds = properties.map((p) => p.id)
+  const [conflicts, moves] = await Promise.all([getConflicts(propertyIds), getUpcomingMovements(propertyIds, 7)])
 
-  const statCards = [
+  const today = todayISO()
+  const tomorrow = addDays(today, 1)
+  const agendaHref = `/${locale}/anfitriao/agenda`
+  const checkins = moves.filter((m) => m.kind === 'checkin')
+  const checkinsToday = checkins.filter((m) => m.date === today).length
+  const nextCheckins = checkins.slice(0, 3)
+  const dayLabel = (iso: string) => (iso === today ? 'Hoje' : iso === tomorrow ? 'Amanhã' : shortDay.format(isoToDate(iso)))
+
+  const statCards: { title: string; value: number; href?: string; alert?: boolean }[] = [
     { title: 'Clientes',       value: stats.totalClients },
-    { title: 'Imóveis ativos', value: stats.totalProperties },
-    { title: 'Reservas hoje',  value: stats.activeReservationsToday },
-    { title: 'Vis. pendentes', value: stats.pendingInspections },
+    { title: 'Imóveis ativos', value: stats.totalProperties, href: `/${locale}/admin/imoveis` },
+    { title: 'Reservas hoje',  value: checkinsToday, href: agendaHref },
+    // Conflito de datas tem prioridade sobre as sugestões
+    conflicts.length > 0
+      ? {
+          title: 'Conflitos de datas',
+          value: conflicts.length,
+          href: `${agendaHref}?propertyId=${conflicts[0].propertyId}&mes=${conflicts[0].a.startDate.slice(0, 7)}`,
+          alert: true,
+        }
+      : { title: 'Sugestões novas', value: stats.suggestionsNew, href: `/${locale}/admin/ocorrencias?aba=sugestoes` },
   ]
 
   const navItems = [
@@ -101,13 +115,68 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
 
         {/* NÚMEROS */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {statCards.map((s) => (
-            <div key={s.title} className="rounded-3xl bg-white p-4 shadow-[0_8px_24px_-8px_rgba(26,86,219,0.25)] ring-1 ring-[#1A56DB]/[0.06]">
-              <p className="text-3xl font-extrabold text-[#0F172A] tabular-nums">{s.value}</p>
-              <p className="mt-0.5 text-xs font-medium text-[#64748B]">{s.title}</p>
-            </div>
-          ))}
+          {statCards.map((s) => {
+            const cls = s.alert
+              ? 'rounded-3xl bg-red-600 p-4 text-white shadow-[0_8px_24px_-8px_rgba(220,38,38,0.45)]'
+              : 'rounded-3xl bg-white p-4 shadow-[0_8px_24px_-8px_rgba(26,86,219,0.25)] ring-1 ring-[#1A56DB]/[0.06]'
+            const body = (
+              <>
+                <p className={`text-3xl font-extrabold tabular-nums ${s.alert ? 'text-white' : 'text-[#0F172A]'}`}>{s.value}</p>
+                <p className={`mt-0.5 text-xs font-medium ${s.alert ? 'text-white/85' : 'text-[#64748B]'}`}>
+                  {s.alert ? `${s.title}: ${s.value}` : s.title}
+                </p>
+              </>
+            )
+            return s.href ? (
+              <Link key={s.title} href={s.href} className={`${cls} block transition active:scale-[0.98]`}>{body}</Link>
+            ) : (
+              <div key={s.title} className={cls}>{body}</div>
+            )
+          })}
         </div>
+
+        {/* PRÓXIMOS CHECK-INS (agenda, todos os imóveis) */}
+        <section>
+          <div className="mb-3.5 flex items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 pl-1 text-base font-extrabold">
+              <LogIn size={18} className="text-[#1A56DB]" /> Próximos check-ins
+            </h2>
+            <Link href={agendaHref} className="inline-flex items-center gap-0.5 text-xs font-semibold text-[#1A56DB]">
+              Ver agenda <ChevronRight size={14} />
+            </Link>
+          </div>
+          {nextCheckins.length === 0 ? (
+            <p className="rounded-3xl bg-white p-5 text-center text-sm text-[#64748B] ring-1 ring-black/5">
+              Nenhum check-in nos próximos 7 dias
+            </p>
+          ) : (
+            <div className="divide-y divide-gray-100 overflow-hidden rounded-3xl bg-white ring-1 ring-black/5">
+              {nextCheckins.map((m) => {
+                const src = SOURCE_META[m.booking.source]
+                return (
+                  <Link
+                    key={m.booking.id}
+                    href={`${agendaHref}?propertyId=${m.booking.propertyId}&mes=${m.date.slice(0, 7)}`}
+                    className="flex items-center gap-3 px-4 py-3 transition active:bg-gray-50"
+                  >
+                    <span className="flex w-16 shrink-0 items-center justify-center rounded-xl bg-emerald-50 px-1 py-2 text-center text-[11px] font-bold capitalize leading-tight text-emerald-700">
+                      {dayLabel(m.date)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold">{m.propertyName}</span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#64748B]">
+                        <span className="h-2 w-2 rounded-full" style={{ background: src.color }} />
+                        {src.label}
+                        {m.booking.guestsCount ? <span>· {m.booking.guestsCount} hósp.</span> : null}
+                      </span>
+                    </span>
+                    <ChevronRight size={18} className="shrink-0 text-[#94A3B8]" />
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </section>
 
         {/* CONFLITOS DE DATAS (agenda) */}
         {conflicts.length > 0 && (
@@ -147,7 +216,7 @@ export default async function AdminDashboard({ params }: { params: Promise<{ loc
                       <div className="absolute bottom-3 left-4 right-4 text-white">
                         <p className="truncate text-base font-bold">{p.name}</p>
                         <p className="flex items-center gap-1 text-xs text-white/75">
-                          <MapPin size={11} /> {p.city}{p.state ? `, ${p.state}` : ''}
+                          <MapPin size={11} /> {formatCityState(p.city, p.state)}
                         </p>
                       </div>
                       <span

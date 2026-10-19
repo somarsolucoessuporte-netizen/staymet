@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatCityState } from '@/lib/utils'
 import {
   MapPin, Users, Wifi, Clock, Calendar, CheckSquare, AlertTriangle,
   Package, Wrench, Home, DollarSign,
@@ -105,7 +105,7 @@ export default async function PropertyDetailPage({
             <Card>
               <CardContent className="pt-3">
                 <MapPin className="h-4 w-4 text-muted-foreground mb-1" strokeWidth={1.5} />
-                <p className="text-sm font-medium">{property.city}</p>
+                <p className="text-sm font-medium">{formatCityState(property.city, property.state)}</p>
                 <p className="text-xs text-muted-foreground">{property.state}</p>
               </CardContent>
             </Card>

@@ -58,3 +58,33 @@ export function getRoleDashboard(role: string): string {
   }
   return dashboards[role] ?? '/pt-BR/gestor/dashboard'
 }
+
+// Partículas que ficam minúsculas no meio do nome ("Maria da Silva", "São Gonçalo do Amarante")
+const NAME_PARTICLES = new Set(['da', 'das', 'de', 'do', 'dos', 'e', "d'"])
+
+/** Nome para exibição: primeira letra de cada palavra maiúscula ("joão da silva" → "João da Silva") */
+export function formatPersonName(name: string | null | undefined): string {
+  if (!name) return ''
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word, i) => {
+      const lower = word.toLocaleLowerCase('pt-BR')
+      if (i > 0 && NAME_PARTICLES.has(lower)) return lower
+      // também capitaliza depois de hífen/apóstrofo ("ana-maria" → "Ana-Maria")
+      return lower.replace(/(^|[-'’])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toLocaleUpperCase('pt-BR'))
+    })
+    .join(' ')
+}
+
+/** Primeiro nome já formatado */
+export function formatFirstName(name: string | null | undefined): string {
+  return formatPersonName(name).split(' ')[0] ?? ''
+}
+
+/** Cidade para exibição: "cruz", "ce" → "Cruz, CE" */
+export function formatCityState(city: string | null | undefined, state: string | null | undefined): string {
+  const c = formatPersonName(city)
+  const s = state?.trim().toLocaleUpperCase('pt-BR') ?? ''
+  return [c, s].filter(Boolean).join(', ')
+}

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { Calendar, Users, Wifi, Clock, Info, MessageCircle, UtensilsCrossed, Headphones, Home, MapPin, Compass } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { formatDate, getRoleDashboard } from '@/lib/utils'
+import { formatDate, getRoleDashboard, formatCityState } from '@/lib/utils'
 import { getCurrentDbUser } from '@/lib/guia-access'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 
@@ -106,7 +106,7 @@ export default async function GuestWelcomePage({
         <div className="absolute bottom-5 left-5 right-5">
           <p className="text-white/60 text-xs mb-1 flex items-center gap-1.5">
             <MapPin size={11} />
-            {prop.city}, {prop.state}
+            {formatCityState(prop.city, prop.state)}
           </p>
           <h1 className="text-2xl font-bold text-white leading-tight" style={{ fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
             {prop.name}

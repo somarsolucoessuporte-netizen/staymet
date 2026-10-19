@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Eye, Link2, SlidersHorizontal, MapPin, AlertCircle } from 'lucide-react'
 import { WarningCircle, CaretRight } from '@phosphor-icons/react/ssr'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
+import { formatCityState } from '@/lib/utils'
 
 export type PropertyGuideInfo = {
   id: string
@@ -40,7 +41,7 @@ export function PropertyGuideCard({ property: p, locale, origin }: { property: P
         <div className="absolute bottom-3 left-4 right-4 text-white">
           <p className="truncate text-base font-bold">{p.name}</p>
           <p className="flex items-center gap-1 text-xs text-white/75">
-            <MapPin size={11} /> {p.city}{p.state ? `, ${p.state}` : ''}
+            <MapPin size={11} /> {formatCityState(p.city, p.state)}
           </p>
         </div>
         <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[0.65rem] font-bold text-[#0F172A]">

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDate, formatFirstName, formatCityState } from '@/lib/utils'
 import {
   Building2, Calendar, TrendingUp, AlertTriangle,
   ClipboardCheck, ArrowRight,
@@ -22,7 +22,7 @@ export default async function ProprietarioDashboardPage({
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
   if (!dbUser) return null
 
-  const firstName = dbUser.name.split(' ')[0]
+  const firstName = formatFirstName(dbUser.name)
   const today = new Date()
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0)
@@ -147,7 +147,7 @@ export default async function ProprietarioDashboardPage({
                 </div>
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 text-sm mb-0.5">{p.name}</h3>
-                  <p className="text-gray-400 text-xs mb-3">{p.city}, {p.state}</p>
+                  <p className="text-gray-400 text-xs mb-3">{formatCityState(p.city, p.state)}</p>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-gray-500 flex items-center gap-1">
                       <Calendar size={11} />

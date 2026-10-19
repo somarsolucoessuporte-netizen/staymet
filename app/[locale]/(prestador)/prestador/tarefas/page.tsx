@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { CheckSquare, Building2, Calendar, Wrench, ClipboardCheck, Sparkles } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatFirstName } from '@/lib/utils'
 import { PrestadorTaskActions } from './PrestadorTaskActions'
 
 const typeConfig: Record<string, { label: string; icon: typeof CheckSquare; color: string; bg: string }> = {
@@ -30,7 +30,7 @@ export default async function PrestadorTarefasPage({
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })
   if (!dbUser) return null
 
-  const firstName = dbUser.name.split(' ')[0]
+  const firstName = formatFirstName(dbUser.name)
 
   const tasks = await prisma.task.findMany({
     where: {

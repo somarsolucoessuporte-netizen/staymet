@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Users, Plus, Search, X, UserPlus, Mail, Shield, Building2 } from 'lucide-react'
+import { formatPersonName } from '@/lib/utils'
 
 const ROLES = [
   { value: 'ADMINISTRADOR', label: 'Administrador', color: 'bg-red-100 text-red-700' },
@@ -166,7 +167,7 @@ export default function UsuariosPage() {
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${roleColor(user.role)}`}>
                           {user.name.substring(0, 2).toUpperCase()}
                         </div>
-                        <span className="font-medium text-gray-800">{user.name}</span>
+                        <span className="font-medium text-gray-800">{formatPersonName(user.name)}</span>
                       </div>
                     </td>
                     <td className="py-3.5 px-4 text-gray-400">{user.email}</td>

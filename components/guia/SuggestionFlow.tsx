@@ -8,7 +8,7 @@ import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { submitSuggestion, createSuggestionPhotoUploadUrl } from '@/lib/actions/sugestoes'
 import { SUGGESTION_TOPICS } from '@/lib/occurrences'
 import { COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
-import { cn } from '@/lib/utils'
+import { cn, formatFirstName } from '@/lib/utils'
 
 export type SuggestionUser = { fullName: string; email: string; avatarUrl: string | null }
 type Sent = { id: string; createdAt: string; firstName: string }
@@ -136,7 +136,7 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
   const [error, setError] = useState<string | null>(null)
   const [pending, start] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  const firstName = user.fullName.split(' ')[0]
+  const firstName = formatFirstName(user.fullName)
   const length = text.trim().length
   const valid = !!topic && length >= MIN && length <= MAX && consent
 
