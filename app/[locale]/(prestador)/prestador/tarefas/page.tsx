@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { CheckSquare, Building2, Calendar, Wrench, ClipboardCheck, Sparkles } from 'lucide-react'
 import { formatDate, formatFirstName } from '@/lib/utils'
@@ -23,8 +23,7 @@ export default async function PrestadorTarefasPage({
   params: Promise<{ locale: string }>
 }) {
   await params
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return null
 
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })

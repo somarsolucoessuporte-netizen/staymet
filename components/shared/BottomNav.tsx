@@ -60,7 +60,7 @@ const prestadorNav: NavItem[] = [
   { href: '/prestador/historico', icon: History, label: 'Histórico' },
 ]
 
-const navByRole: Record<string, NavItem[]> = {
+export const navByRole: Record<string, NavItem[]> = {
   gestor: gestorNav,
   proprietario: proprietarioNav,
   anfitriao: anfitriaoNav,

@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
@@ -60,6 +60,19 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({ resolver: zodResolver(schema) })
+
+  // Já tem sessão (ex.: voltou do Google com aviso de erro, mas o login concluiu): vai direto pro painel
+  useEffect(() => {
+    let alive = true
+    createClient().auth.getUser().then(async ({ data: { user } }) => {
+      if (!alive || !user) return
+      const res = await fetch('/api/auth/me')
+      if (!alive || !res.ok) return
+      const me = await res.json()
+      if (me?.role) router.replace(getRoleDashboard(me.role).replace('/pt-BR', `/${locale}`))
+    })
+    return () => { alive = false }
+  }, [locale, router])
 
   const onSubmit = async (data: FormData) => {
     setError(null)

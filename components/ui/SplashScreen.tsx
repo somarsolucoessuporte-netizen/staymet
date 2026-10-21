@@ -8,12 +8,12 @@ interface SplashScreenProps {
   duration?: number
 }
 
-export function SplashScreen({ onComplete, duration = 2200 }: SplashScreenProps) {
+export function SplashScreen({ onComplete, duration = 1200 }: SplashScreenProps) {
   const [phase, setPhase] = useState<'enter' | 'hold' | 'exit'>('enter')
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('hold'), 600)
-    const t2 = setTimeout(() => setPhase('exit'), 1600)
+    const t1 = setTimeout(() => setPhase('hold'), 300)
+    const t2 = setTimeout(() => setPhase('exit'), 850)
     const t3 = setTimeout(() => onComplete(), duration)
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
   }, [onComplete, duration])

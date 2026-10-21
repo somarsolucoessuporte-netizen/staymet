@@ -1,15 +1,15 @@
-import { createClient } from '@/lib/supabase/server'
+import { cache } from 'react'
+import { getAuthUser } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 
 // Quem pode editar o guia de qualquer imóvel
 const FULL_ACCESS_ROLES = ['ADMINISTRADOR', 'GESTOR']
 
-export async function getCurrentDbUser() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+export const getCurrentDbUser = cache(async () => {
+  const user = await getAuthUser()
   if (!user) return null
   return prisma.user.findUnique({ where: { supabaseId: user.id } })
-}
+})
 
 type DbUser = NonNullable<Awaited<ReturnType<typeof getCurrentDbUser>>>
 

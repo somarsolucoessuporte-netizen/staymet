@@ -26,9 +26,17 @@ export async function GET(request: Request) {
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.exchangeCodeForSession(code)
-  if (error || !data.user) return loginError(failReason)
-
-  const authUser = data.user
+  let authUser = data?.user ?? null
+  if (error || !authUser) {
+    // O retorno do Google às vezes chega duas vezes (ou o código já foi trocado):
+    // se a sessão já existe, entra normalmente em vez de mostrar erro
+    const { data: current } = await supabase.auth.getUser()
+    authUser = current.user
+    if (!authUser) {
+      console.error('[auth/callback] exchangeCodeForSession falhou:', error?.message)
+      return loginError(failReason)
+    }
+  }
   let dbUser = await prisma.user.findUnique({ where: { supabaseId: authUser.id } })
 
   // Só cria o User automaticamente em login social; e-mail/senha é criado pelo /register

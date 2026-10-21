@@ -23,12 +23,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  const intlResponse = intlMiddleware(request)
-
   if (isPublicPath(pathname)) {
-    return intlResponse
+    return intlMiddleware(request)
   }
 
+  // Cookies renovados pelo Supabase vão para a requisição E para a resposta
+  // (sem isso a sessão renovada se perde e o login "cai" e volta)
+  const pending: { name: string; value: string; options?: Parameters<NextResponse['cookies']['set']>[2] }[] = []
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -38,36 +39,40 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
+          cookiesToSet.forEach(({ name, value, options }) => {
             request.cookies.set(name, value)
-          )
+            pending.push({ name, value, options })
+          })
         },
       },
     }
   )
+  const withCookies = (res: NextResponse) => {
+    pending.forEach(({ name, value, options }) => res.cookies.set(name, value, options))
+    return res
+  }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getClaims valida o token localmente quando possível (mais rápido que getUser em toda navegação)
+  const { data } = await supabase.auth.getClaims()
+  const user = data?.claims ?? null
 
-  if (!user && !isPublicPath(pathname)) {
+  if (!user) {
     const locale = pathname.startsWith('/en') ? 'en' : 'pt-BR'
     const url = request.nextUrl.clone()
     url.pathname = `/${locale}/login`
-    return NextResponse.redirect(url)
+    url.search = ''
+    return withCookies(NextResponse.redirect(url))
   }
 
   // Admin com ?viewAs pode acessar qualquer persona sem redirect
-  if (user) {
-    const viewAs = request.nextUrl.searchParams.get('viewAs')
-    if (viewAs) {
-      const response = NextResponse.next()
-      response.headers.set('x-anfitriao-management-admin-bypass', '1')
-      return response
-    }
+  if (request.nextUrl.searchParams.get('viewAs')) {
+    const response = NextResponse.next()
+    response.headers.set('x-anfitriao-management-admin-bypass', '1')
+    return withCookies(response)
   }
 
-  return intlResponse
+  // next-intl roda depois da sessão, então já repassa os cookies renovados para a página
+  return withCookies(intlMiddleware(request))
 }
 
 export const config = {

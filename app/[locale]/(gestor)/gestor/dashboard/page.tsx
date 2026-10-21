@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/server'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency } from '@/lib/utils'
 import {
@@ -10,8 +10,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 async function getDashboardData() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
   if (!user) return null
 
   const dbUser = await prisma.user.findUnique({ where: { supabaseId: user.id } })

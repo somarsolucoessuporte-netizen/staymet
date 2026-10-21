@@ -1,4 +1,5 @@
 import { BottomNav } from './BottomNav'
+import { BackButton } from './BackButton'
 import { SomarFooter } from './SomarFooter'
 
 interface AppShellProps {
@@ -11,6 +12,11 @@ export function AppShell({ children, role, locale }: AppShellProps) {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <main className="flex-1 pb-20 max-w-lg mx-auto w-full">
+        <BackButton
+          locale={locale}
+          role={role}
+          skip={['/anfitriao/agenda/canais', '/anfitriao/ocorrencias/', '/gestor/ocorrencias/']}
+        />
         {children}
         {/* Anfitrião: rodapé padrão da Somar no fim do conteúdo */}
         {role === 'anfitriao' && <SomarFooter className="mt-6" />}

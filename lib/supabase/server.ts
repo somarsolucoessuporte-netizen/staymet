@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -25,3 +26,10 @@ export async function createClient() {
     }
   )
 }
+
+/** Usuário autenticado da requisição atual — uma única chamada ao Supabase por request (layout + página reaproveitam) */
+export const getAuthUser = cache(async () => {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+})
