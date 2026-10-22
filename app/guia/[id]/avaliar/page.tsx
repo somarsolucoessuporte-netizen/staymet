@@ -8,9 +8,19 @@ import { createClient } from '@/lib/supabase/server'
 import { SuggestionFlow, type SuggestionUser, type ReviewChannel } from '@/components/guia/SuggestionFlow'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
 import { SomarFooter } from '@/components/shared/SomarFooter'
+import { isoToDate, todayISO, SOURCE_META } from '@/lib/agenda'
 
 // "Avaliar estadia" do guia público: links de avaliação dos sites (Airbnb, Booking, Google...)
 // cadastrados pelo anfitrião + avaliação com estrelas aqui no app (exige entrar, como a caixinha).
+// Sem login: a reserva em andamento hoje (Agenda) diz de qual site o hóspede veio, e esse botão vem em destaque.
+
+/** Palavras que ligam a origem da reserva ao botão de avaliação cadastrado pelo anfitrião */
+const SOURCE_MATCH: Record<string, RegExp> = {
+  AIRBNB: /airbnb/i,
+  BOOKING: /booking/i,
+  VRBO: /vrbo|expedia|hotels\.com/i,
+  OLX: /olx/i,
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -39,6 +49,18 @@ export default async function AvaliarPage({ params }: { params: Promise<{ id: st
     .map((p) => p.partner)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
     .map((p) => ({ id: p.id, name: p.name, url: p.externalUrl! }))
+
+  // Reserva em andamento hoje (quem sai hoje vem primeiro: é a hora de avaliar). Bloqueios não contam.
+  const today = isoToDate(todayISO())
+  const current = await prisma.booking.findFirst({
+    where: { propertyId: id, status: 'CONFIRMADA', source: { not: 'BLOQUEIO' }, startDate: { lte: today }, endDate: { gte: today } },
+    orderBy: { endDate: 'asc' },
+    select: { source: true },
+  })
+  const re = current ? SOURCE_MATCH[current.source] : undefined
+  const match = re ? channels.find((c) => re.test(c.name) || re.test(c.url)) : undefined
+  const others = match ? channels.filter((c) => c.id !== match.id) : channels
+  const sourceLabel = current ? SOURCE_META[current.source].label : null
 
   const supabase = await createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
@@ -72,11 +94,26 @@ export default async function AvaliarPage({ params }: { params: Promise<{ id: st
                 <CategoryIcon kind="AVALIAR" size={44} />
                 <div>
                   <h1 className="text-lg font-extrabold leading-tight">Avalie sua estadia</h1>
-                  <p className="text-sm text-[#475569]">No site em que você reservou</p>
+                  <p className="text-sm text-[#475569]">
+                    {match ? `Você reservou pelo ${sourceLabel}` : 'No site em que você reservou'}
+                  </p>
                 </div>
               </div>
+              {match && (
+                <a
+                  href={match.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#1A56DB] text-[15px] font-semibold text-white shadow-sm transition active:scale-[0.98]"
+                >
+                  {match.name} <ArrowSquareOut size={18} weight="bold" />
+                </a>
+              )}
+              {match && others.length > 0 && (
+                <p className="pt-1 text-xs font-semibold text-[#64748B]">Reservou por outro site?</p>
+              )}
               <div className="space-y-2">
-                {channels.map((c) => (
+                {others.map((c) => (
                   <a
                     key={c.id}
                     href={c.url}
@@ -102,7 +139,7 @@ export default async function AvaliarPage({ params }: { params: Promise<{ id: st
                   <span className="h-px flex-1 bg-[#E2E8F0]" /> ou avalie aqui no guia <span className="h-px flex-1 bg-[#E2E8F0]" />
                 </div>
               )}
-              <SuggestionFlow key={user?.email ?? 'anon'} propertyId={property.id} propertyName={property.name} user={user} mode="avaliacao" channels={channels} />
+              <SuggestionFlow key={user?.email ?? 'anon'} propertyId={property.id} propertyName={property.name} user={user} mode="avaliacao" channels={match ? [match] : channels} />
             </section>
           )}
 
