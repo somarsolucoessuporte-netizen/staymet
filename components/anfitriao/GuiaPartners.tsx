@@ -410,7 +410,8 @@ function PartnerRow({
       </div>
 
       {/* Linha 2: WhatsApp + link */}
-      <div className="mt-2 grid grid-cols-2 gap-2">
+      <div className={cn('mt-2 grid gap-2', category === 'AVALIACAO' ? 'grid-cols-1' : 'grid-cols-2')}>
+        {category !== 'AVALIACAO' && (
         <input
           aria-label="WhatsApp"
           value={whatsapp}
@@ -423,12 +424,13 @@ function PartnerRow({
           placeholder="WhatsApp: 85 99999-8888"
           className={inputCls}
         />
+        )}
         <input
           aria-label="Link (Maps ou site)"
           value={link}
           onChange={(e) => setLink(e.target.value)}
           inputMode="url"
-          placeholder={category === 'AVALIACAO' ? 'Link da página de avaliação' : 'ou Link (Maps/site)'}
+          placeholder={category === 'AVALIACAO' ? 'Link da página de avaliação (ex.: g.page/r/...)' : 'ou Link (Maps/site)'}
           className={inputCls}
         />
       </div>
