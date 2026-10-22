@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { BrandMark } from '@/components/ui/BrandMark'
 
-const TOTAL_MS = 2000   // duração total da abertura
+const TOTAL_MS = 2300   // duração total da abertura
 const LEAVE_MS = 400    // fade-out + slide final
 const REDUCED_MS = 450  // prefers-reduced-motion: só um fade rápido
 
@@ -62,13 +63,14 @@ export function GuiaSplash({ id, propertyName, coverUrl }: { id: string; propert
         @keyframes guia-line { from { transform: scaleX(0) } to { transform: scaleX(1) } }
         @keyframes guia-leave { to { opacity: 0 } }
         .guia-splash-photo { animation: guia-fade-in .5s ease-out both, guia-zoom ${TOTAL_MS + 400}ms cubic-bezier(.2,.7,.2,1) both }
-        .guia-splash-k { animation: guia-rise .55s cubic-bezier(.2,.8,.2,1) .15s both }
-        .guia-splash-name { animation: guia-rise .6s cubic-bezier(.2,.8,.2,1) .3s both }
-        .guia-splash-line { transform-origin: center; animation: guia-line .6s cubic-bezier(.2,.8,.2,1) .55s both }
+        .guia-splash-brand { animation: guia-rise .6s cubic-bezier(.2,.8,.2,1) both }
+        .guia-splash-k { animation: guia-rise .55s cubic-bezier(.2,.8,.2,1) .35s both }
+        .guia-splash-name { animation: guia-rise .6s cubic-bezier(.2,.8,.2,1) .5s both }
+        .guia-splash-line { transform-origin: center; animation: guia-line .6s cubic-bezier(.2,.8,.2,1) .75s both }
         .guia-splash-foot { animation: guia-fade-in .5s ease-out .7s both }
         .guia-splash-leave { animation: guia-leave ${LEAVE_MS}ms ease-in forwards }
         @media (prefers-reduced-motion: reduce) {
-          .guia-splash-photo, .guia-splash-k, .guia-splash-name, .guia-splash-line, .guia-splash-foot { animation: none }
+          .guia-splash-photo, .guia-splash-brand, .guia-splash-k, .guia-splash-name, .guia-splash-line, .guia-splash-foot { animation: none }
           .guia-splash-leave { animation: guia-leave .25s linear forwards }
         }
       `}</style>
@@ -80,9 +82,14 @@ export function GuiaSplash({ id, propertyName, coverUrl }: { id: string; propert
       ) : (
         <div className="guia-splash-photo absolute inset-0 bg-gradient-to-br from-[#1A56DB] via-[#0F3A7A] to-[#0B1B3A]" />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/55 to-[#0B1B3A]/10" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/60 to-[#0B1B3A]/45" />
 
-      <div className="absolute inset-x-0 bottom-[22%] flex flex-col items-center px-8 text-center text-white">
+      {/* Marca no alto, com brilho correndo dentro das letras */}
+      <div className="guia-splash-brand absolute inset-x-0 top-[24%] flex justify-center">
+        <BrandMark width={190} tone="white" shine />
+      </div>
+
+      <div className="absolute inset-x-0 bottom-[20%] flex flex-col items-center px-8 text-center text-white">
         <p className="guia-splash-k text-[11px] font-semibold uppercase tracking-[0.35em] text-white/75">Bem-vindo(a) à</p>
         {propertyName && (
           <h1 className="guia-splash-name mt-3 max-w-[18rem] text-[30px] font-extrabold leading-[1.1] tracking-tight [text-wrap:balance] [text-shadow:0_2px_16px_rgba(0,0,0,.35)]">
