@@ -1,16 +1,15 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BrandMark } from '@/components/ui/BrandMark'
 
-const TOTAL_MS = 1850   // duração total da abertura
+const TOTAL_MS = 2000   // duração total da abertura
 const LEAVE_MS = 400    // fade-out + slide final
 const REDUCED_MS = 450  // prefers-reduced-motion: só um fade rápido
 
 type Phase = 'show' | 'leaving' | 'done'
 
 /** Abertura curta do guia público — 1 vez por sessão, toque para pular */
-export function GuiaSplash({ id, propertyName }: { id: string; propertyName?: string }) {
+export function GuiaSplash({ id, propertyName, coverUrl }: { id: string; propertyName?: string; coverUrl?: string | null }) {
   // Renderiza visível já no servidor para o guia não "piscar" antes da abertura
   const [phase, setPhase] = useState<Phase>('show')
   const key = `guia_splash_${id}`
@@ -52,48 +51,49 @@ export function GuiaSplash({ id, propertyName }: { id: string; propertyName?: st
     <div
       role="presentation"
       onClick={() => setPhase('leaving')}
-      className={`guia-splash fixed inset-0 z-[100] flex cursor-pointer flex-col items-center justify-center bg-gradient-to-br from-[#1A56DB] to-[#0F172A] ${
+      className={`guia-splash fixed inset-0 z-[100] cursor-pointer overflow-hidden bg-[#0B1B3A] ${
         phase === 'leaving' ? 'guia-splash-leave' : ''
       }`}
     >
       <style>{`
-        @keyframes guia-logo-in { from { opacity: 0; transform: scale(.8) } to { opacity: 1; transform: scale(1) } }
-        @keyframes guia-ring { 0% { opacity: .55; transform: scale(.7) } 100% { opacity: 0; transform: scale(1.9) } }
-        @keyframes guia-shine { from { transform: translateX(-140%) skewX(-20deg) } to { transform: translateX(240%) skewX(-20deg) } }
-        @keyframes guia-text-in { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
-        @keyframes guia-leave { to { opacity: 0; transform: translateY(-24px) } }
-        .guia-splash-logo { animation: guia-logo-in .5s cubic-bezier(.2,.8,.2,1) both }
-        .guia-splash-ring { animation: guia-ring 1.4s ease-out .35s both }
-        .guia-splash-shine { animation: guia-shine .9s ease-in-out .55s both }
-        .guia-splash-text { animation: guia-text-in .45s ease-out .5s both }
+        @keyframes guia-zoom { from { transform: scale(1.12) } to { transform: scale(1) } }
+        @keyframes guia-fade-in { from { opacity: 0 } to { opacity: 1 } }
+        @keyframes guia-rise { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+        @keyframes guia-line { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+        @keyframes guia-leave { to { opacity: 0 } }
+        .guia-splash-photo { animation: guia-fade-in .5s ease-out both, guia-zoom ${TOTAL_MS + 400}ms cubic-bezier(.2,.7,.2,1) both }
+        .guia-splash-k { animation: guia-rise .55s cubic-bezier(.2,.8,.2,1) .15s both }
+        .guia-splash-name { animation: guia-rise .6s cubic-bezier(.2,.8,.2,1) .3s both }
+        .guia-splash-line { transform-origin: center; animation: guia-line .6s cubic-bezier(.2,.8,.2,1) .55s both }
+        .guia-splash-foot { animation: guia-fade-in .5s ease-out .7s both }
         .guia-splash-leave { animation: guia-leave ${LEAVE_MS}ms ease-in forwards }
         @media (prefers-reduced-motion: reduce) {
-          .guia-splash-logo, .guia-splash-ring, .guia-splash-shine, .guia-splash-text { animation: none }
-          .guia-splash-ring, .guia-splash-shine { display: none }
-          .guia-splash-leave { animation: guia-fade .25s linear forwards }
-          @keyframes guia-fade { to { opacity: 0 } }
+          .guia-splash-photo, .guia-splash-k, .guia-splash-name, .guia-splash-line, .guia-splash-foot { animation: none }
+          .guia-splash-leave { animation: guia-leave .25s linear forwards }
         }
       `}</style>
 
-      <div className="relative flex flex-col items-center">
-        {/* anel branco que pulsa atrás do ícone */}
-        <span className="guia-splash-ring pointer-events-none absolute top-0 h-[72px] w-[72px] rounded-[1.4rem] border-2 border-white/70" />
+      {/* Foto de capa da casa (ou só o fundo azul) com zoom lento */}
+      {coverUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={coverUrl} alt="" className="guia-splash-photo absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="guia-splash-photo absolute inset-0 bg-gradient-to-br from-[#1A56DB] via-[#0F3A7A] to-[#0B1B3A]" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0B1B3A] via-[#0B1B3A]/55 to-[#0B1B3A]/10" />
 
-        <div className="guia-splash-logo relative">
-          <BrandMark width={200} tone="white" />
-          {/* brilho que atravessa a logo */}
-          <span className="guia-splash-shine pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-transparent via-white/45 to-transparent" />
-        </div>
-
+      <div className="absolute inset-x-0 bottom-[22%] flex flex-col items-center px-8 text-center text-white">
+        <p className="guia-splash-k text-[11px] font-semibold uppercase tracking-[0.35em] text-white/75">Bem-vindo(a) à</p>
         {propertyName && (
-          <p className="guia-splash-text mt-6 max-w-[16rem] text-center text-sm font-medium text-white/80">
-            Bem-vindo(a) à {propertyName}
-          </p>
+          <h1 className="guia-splash-name mt-3 max-w-[18rem] text-[30px] font-extrabold leading-[1.1] tracking-tight [text-wrap:balance] [text-shadow:0_2px_16px_rgba(0,0,0,.35)]">
+            {propertyName}
+          </h1>
         )}
+        <span className="guia-splash-line mt-5 h-[2px] w-12 rounded-full bg-[#F59E0B]" />
       </div>
 
-      <p className="guia-splash-text absolute bottom-[calc(28px+env(safe-area-inset-bottom,0px))] text-[11px] text-white/40">
-        Toque para pular
+      <p className="guia-splash-foot absolute inset-x-0 bottom-[calc(24px+env(safe-area-inset-bottom,0px))] text-center text-[11px] text-white/45">
+        Guia digital da casa · toque para entrar
       </p>
     </div>
   )

@@ -214,7 +214,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
 
   return (
     <div id="topo" className="font-display flex min-h-[100dvh] flex-col bg-[#F8FAFC] text-[#0F172A]">
-      <GuiaSplash id={id} propertyName={guia.name} />
+      <GuiaSplash id={id} propertyName={guia.name} coverUrl={guia.coverImageUrl} />
 
       <div className="mx-auto w-full max-w-md flex-1">
 
