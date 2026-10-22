@@ -60,7 +60,7 @@ function testHref(category: string, whatsapp: string, link: string, phone: strin
   const wa = waLink(whatsapp)
   const url = normalizeLink(link)
   const tel = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null
-  return (sectionOf(category) === 'dicas' ? url ?? wa : wa ?? url) ?? tel
+  return (sectionOf(category) === 'contatos' ? wa ?? url : url ?? wa) ?? tel
 }
 
 /** PointerSensor só para mouse/caneta: no toque vale o TouchSensor (com delay, para não brigar com a rolagem) */
@@ -112,6 +112,7 @@ export function GuiaPartners({
   const groups = [
     { key: 'contatos', title: 'Contatos (WhatsApp)', items: groupItems('contatos') },
     { key: 'dicas', title: 'Dicas e roteiros (mapa/link)', items: groupItems('dicas') },
+    { key: 'avaliacao', title: 'Avaliação nos sites (link)', items: groupItems('avaliacao') },
   ]
   const visible = partners.filter((p) => p.active).length
 
@@ -395,7 +396,7 @@ function PartnerRow({
           aria-label="Texto do botão"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Texto do botão (ex.: Pizzaria 1)"
+          placeholder={category === 'AVALIACAO' ? 'Texto do botão (ex.: Avaliar no Airbnb)' : 'Texto do botão (ex.: Pizzaria 1)'}
           autoFocus={isNew}
           className={cn(inputCls, 'font-semibold')}
         />
@@ -427,7 +428,7 @@ function PartnerRow({
           value={link}
           onChange={(e) => setLink(e.target.value)}
           inputMode="url"
-          placeholder="ou Link (Maps/site)"
+          placeholder={category === 'AVALIACAO' ? 'Link da página de avaliação' : 'ou Link (Maps/site)'}
           className={inputCls}
         />
       </div>

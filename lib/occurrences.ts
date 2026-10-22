@@ -69,6 +69,8 @@ export const SUGGESTION_TOPICS = [
 ] as const
 
 export const SUGGESTION_TITLE_PREFIX = 'Sugestão – '
+/** Avaliação com estrelas pelo guia: gravada como sugestão (aparece na mesma aba do painel) */
+export const REVIEW_TOPIC = 'Avaliação'
 export const SUGGESTIONS_PER_DAY = 5
 
 export const EVENT_LABEL: Record<string, string> = {

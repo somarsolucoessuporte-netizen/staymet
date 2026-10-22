@@ -3,19 +3,24 @@
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
-import { SUGGESTION_TOPICS, SUGGESTION_TITLE_PREFIX, SUGGESTIONS_PER_DAY, SUGGESTION_CATEGORY } from '@/lib/occurrences'
+import { SUGGESTION_TOPICS, SUGGESTION_TITLE_PREFIX, SUGGESTIONS_PER_DAY, SUGGESTION_CATEGORY, REVIEW_TOPIC } from '@/lib/occurrences'
 import { ensurePublicBucket } from '@/lib/supabase/admin'
 import { COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
 
 type Result = { ok: true; id: string; createdAt: string; firstName: string } | { ok: false; error: string }
 
-const schema = z.object({
-  propertyId: z.string().min(1),
-  topic: z.enum(SUGGESTION_TOPICS, { error: 'Escolha sobre o que é a sugestão.' }),
-  text: z.string().trim().min(10, 'Escreva pelo menos 10 caracteres.').max(1500, 'Máximo de 1.500 caracteres.'),
-  photoUrl: z.string().url().optional().or(z.literal('')),
-  consent: z.literal(true, { error: 'Para enviar, marque a autorização de compartilhamento.' }),
-})
+const schema = z
+  .object({
+    propertyId: z.string().min(1),
+    topic: z.enum([...SUGGESTION_TOPICS, REVIEW_TOPIC], { error: 'Escolha sobre o que é a sugestão.' }),
+    text: z.string().trim().max(1500, 'Máximo de 1.500 caracteres.'),
+    photoUrl: z.string().url().optional().or(z.literal('')),
+    consent: z.literal(true, { error: 'Para enviar, marque a autorização de compartilhamento.' }),
+    // Avaliação: 1 a 5 estrelas, comentário opcional
+    rating: z.number().int().min(1).max(5).optional(),
+  })
+  .refine((d) => (d.topic === REVIEW_TOPIC ? !!d.rating : true), { message: 'Escolha de 1 a 5 estrelas.', path: ['rating'] })
+  .refine((d) => d.topic === REVIEW_TOPIC || d.text.length >= 10, { message: 'Escreva pelo menos 10 caracteres.', path: ['text'] })
 
 /** Caixinha de sugestões do guia: exige sessão (Google ou link mágico); grava Occurrence SUGESTAO + evento CRIADA */
 export async function submitSuggestion(input: z.input<typeof schema>): Promise<Result> {
@@ -26,7 +31,8 @@ export async function submitSuggestion(input: z.input<typeof schema>): Promise<R
 
     const parsed = schema.safeParse(input)
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos.' }
-    const { propertyId, topic, text, photoUrl } = parsed.data
+    const { propertyId, topic, text, photoUrl, rating } = parsed.data
+    const isReview = topic === REVIEW_TOPIC && !!rating
 
     const property = await prisma.property.findFirst({ where: { id: propertyId, active: true }, select: { suggestionsEnabled: true } })
     if (!property) return { ok: false, error: 'Imóvel não encontrado.' }
@@ -72,12 +78,12 @@ export async function submitSuggestion(input: z.input<typeof schema>): Promise<R
       const occ = await tx.occurrence.create({
         data: {
           propertyId,
-          title: `${SUGGESTION_TITLE_PREFIX}${topic}`,
-          description: text,
+          title: isReview ? `${SUGGESTION_TITLE_PREFIX}${REVIEW_TOPIC} ${'★'.repeat(rating!)}${'☆'.repeat(5 - rating!)} (${rating}/5)` : `${SUGGESTION_TITLE_PREFIX}${topic}`,
+          description: text || 'Sem comentário.',
           photos: photoUrl ? [photoUrl] : [],
           category: SUGGESTION_CATEGORY,
           source: 'HOSPEDE',
-          priority: 'BAIXA',
+          priority: isReview && rating! <= 2 ? 'MEDIA' : 'BAIXA',
           status: 'ABERTA',
           reportedById: user.id,
           reporterName: user.name,
@@ -88,7 +94,7 @@ export async function submitSuggestion(input: z.input<typeof schema>): Promise<R
       })
       await tx.occurrenceEvent.create({
         data: {
-          occurrenceId: occ.id, type: 'CRIADA', toValue: 'Nova', message: topic,
+          occurrenceId: occ.id, type: 'CRIADA', toValue: 'Nova', message: isReview ? `${REVIEW_TOPIC} ${rating}/5` : topic,
           actorId: user.id, actorLabel: `Hóspede – ${user.name}`,
         },
       })

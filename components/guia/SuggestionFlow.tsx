@@ -2,15 +2,20 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { Lightbulb, Heart, EnvelopeSimple, ImageSquare, X, CircleNotch } from '@phosphor-icons/react'
+import { Lightbulb, Heart, EnvelopeSimple, ImageSquare, X, CircleNotch, Star, ArrowSquareOut } from '@phosphor-icons/react'
 import { createClient } from '@/lib/supabase/client'
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton'
 import { submitSuggestion, createSuggestionPhotoUploadUrl } from '@/lib/actions/sugestoes'
-import { SUGGESTION_TOPICS } from '@/lib/occurrences'
+import { SUGGESTION_TOPICS, REVIEW_TOPIC } from '@/lib/occurrences'
 import { COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
 import { cn, formatFirstName } from '@/lib/utils'
 
 export type SuggestionUser = { fullName: string; email: string; avatarUrl: string | null }
+/** Link de avaliação num site (Airbnb, Booking...) configurado pelo anfitrião */
+export type ReviewChannel = { id: string; name: string; url: string }
+type Mode = 'sugestao' | 'avaliacao'
+
+const RATING_LABEL = ['', 'Ruim', 'Regular', 'Boa', 'Muito boa', 'Excelente']
 type Sent = { id: string; createdAt: string; firstName: string }
 
 const MIN = 10
@@ -20,10 +25,14 @@ export function SuggestionFlow({
   propertyId,
   propertyName,
   user,
+  mode = 'sugestao',
+  channels = [],
 }: {
   propertyId: string
   propertyName: string
   user: SuggestionUser | null
+  mode?: Mode
+  channels?: ReviewChannel[]
 }) {
   const [sent, setSent] = useState<Sent | null>(null)
   const step = sent ? 3 : user ? 2 : 1
@@ -31,16 +40,16 @@ export function SuggestionFlow({
 
   return (
     <div className="space-y-6">
-      <Stepper step={step} />
-      {step === 1 && <StepLogin propertyId={propertyId} />}
-      {step === 2 && user && <StepWrite propertyId={propertyId} user={user} onSent={setSent} />}
-      {step === 3 && sent && <StepThanks sent={sent} propertyName={propertyName} backHref={backHref} />}
+      <Stepper step={step} mode={mode} />
+      {step === 1 && <StepLogin propertyId={propertyId} mode={mode} />}
+      {step === 2 && user && <StepWrite propertyId={propertyId} user={user} onSent={setSent} mode={mode} />}
+      {step === 3 && sent && <StepThanks sent={sent} propertyName={propertyName} backHref={backHref} mode={mode} channels={channels} />}
     </div>
   )
 }
 
-function Stepper({ step }: { step: number }) {
-  const steps = ['Entrar', 'Escrever', 'Enviado']
+function Stepper({ step, mode }: { step: number; mode: Mode }) {
+  const steps = ['Entrar', mode === 'avaliacao' ? 'Avaliar' : 'Escrever', 'Enviado']
   return (
     <ol className="flex items-center justify-center gap-2 text-[11px] font-semibold" aria-label="Etapas">
       {steps.map((label, i) => {
@@ -62,11 +71,12 @@ function Stepper({ step }: { step: number }) {
 
 // ─── Passo 1: entrar ───
 
-function StepLogin({ propertyId }: { propertyId: string }) {
+function StepLogin({ propertyId, mode }: { propertyId: string; mode: Mode }) {
   const [showEmail, setShowEmail] = useState(false)
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
-  const next = `/guia/${propertyId}/sugestoes`
+  const review = mode === 'avaliacao'
+  const next = `/guia/${propertyId}/${review ? 'avaliar' : 'sugestoes'}`
 
   const sendLink = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,11 +92,15 @@ function StepLogin({ propertyId }: { propertyId: string }) {
 
   return (
     <div className="space-y-5 text-center">
-      <IconCircle><Lightbulb size={40} weight="duotone" color="#1A56DB" /></IconCircle>
+      <IconCircle>
+        {review ? <Star size={40} weight="duotone" color="#CA8A04" /> : <Lightbulb size={40} weight="duotone" color="#1A56DB" />}
+      </IconCircle>
       <div>
-        <h1 className="text-xl font-extrabold">Caixinha de sugestões</h1>
+        <h1 className="text-xl font-extrabold">{review ? 'Avalie aqui no guia' : 'Caixinha de sugestões'}</h1>
         <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-[#475569]">
-          Para enviar sua sugestão, precisamos que você esteja conectado. É rápido: um toque com sua conta Google.
+          {review
+            ? 'Para deixar suas estrelas e um comentário para o anfitrião, entre com um toque na sua conta Google.'
+            : 'Para enviar sua sugestão, precisamos que você esteja conectado. É rápido: um toque com sua conta Google.'}
         </p>
       </div>
 
@@ -126,9 +140,11 @@ function StepLogin({ propertyId }: { propertyId: string }) {
 
 // ─── Passo 2: escrever ───
 
-function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: SuggestionUser; onSent: (s: Sent) => void }) {
+function StepWrite({ propertyId, user, onSent, mode }: { propertyId: string; user: SuggestionUser; onSent: (s: Sent) => void; mode: Mode }) {
   const router = useRouter()
-  const [topic, setTopic] = useState<string | null>(null)
+  const review = mode === 'avaliacao'
+  const [rating, setRating] = useState(0)
+  const [topic, setTopic] = useState<string | null>(review ? REVIEW_TOPIC : null)
   const [text, setText] = useState('')
   const [consent, setConsent] = useState(false)
   const [photo, setPhoto] = useState<string | null>(null)
@@ -138,7 +154,9 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
   const fileRef = useRef<HTMLInputElement>(null)
   const firstName = formatFirstName(user.fullName)
   const length = text.trim().length
-  const valid = !!topic && length >= MIN && length <= MAX && consent
+  const valid = review
+    ? rating >= 1 && length <= MAX && consent
+    : !!topic && length >= MIN && length <= MAX && consent
 
   const signOut = async () => {
     await createClient().auth.signOut()
@@ -167,7 +185,14 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
   const submit = () =>
     start(async () => {
       setError(null)
-      const r = await submitSuggestion({ propertyId, topic: topic as (typeof SUGGESTION_TOPICS)[number], text, photoUrl: photo ?? '', consent: consent as true })
+      const r = await submitSuggestion({
+        propertyId,
+        topic: topic as (typeof SUGGESTION_TOPICS)[number] | typeof REVIEW_TOPIC,
+        text,
+        photoUrl: photo ?? '',
+        consent: consent as true,
+        rating: review ? rating : undefined,
+      })
       if (!r.ok) return setError(r.error)
       onSent({ id: r.id, createdAt: r.createdAt, firstName: r.firstName })
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -188,6 +213,27 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
         </div>
       </div>
 
+      {review ? (
+        <fieldset className="rounded-2xl bg-white p-4 text-center ring-1 ring-black/5">
+          <legend className="sr-only">Sua nota</legend>
+          <p className="text-sm font-bold">Como foi a sua estadia?</p>
+          <div className="mt-3 flex justify-center gap-1.5">
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-label={`${n} ${n === 1 ? 'estrela' : 'estrelas'}`}
+                aria-pressed={rating === n}
+                onClick={() => setRating(n)}
+                className="rounded-xl p-1 transition active:scale-90"
+              >
+                <Star size={40} weight={n <= rating ? 'fill' : 'regular'} color={n <= rating ? '#F59E0B' : '#CBD5E1'} />
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 h-5 text-sm font-semibold text-[#B45309]">{RATING_LABEL[rating]}</p>
+        </fieldset>
+      ) : (
       <fieldset>
         <legend className="mb-2 text-sm font-bold">Sobre o que é sua sugestão?</legend>
         <div className="flex flex-wrap gap-2">
@@ -207,19 +253,20 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
           ))}
         </div>
       </fieldset>
+      )}
 
       <div>
-        <label htmlFor="sug-text" className="mb-2 block text-sm font-bold">Sua sugestão</label>
+        <label htmlFor="sug-text" className="mb-2 block text-sm font-bold">{review ? 'Comentário (opcional)' : 'Sua sugestão'}</label>
         <textarea
           id="sug-text"
           value={text}
           onChange={(e) => setText(e.target.value.slice(0, MAX))}
           rows={5}
-          placeholder="Conte o que podemos melhorar na casa ou na estadia…"
+          placeholder={review ? 'O que você mais gostou? O que podemos melhorar?' : 'Conte o que podemos melhorar na casa ou na estadia…'}
           className="w-full rounded-2xl border border-[#E2E8F0] bg-white p-3.5 text-[15px] leading-relaxed focus:border-[#1A56DB] focus:outline-none focus:ring-2 focus:ring-[#1A56DB]/15"
         />
         <p className={cn('mt-1 text-right text-[11px]', length > 0 && length < MIN ? 'text-amber-600' : 'text-[#94A3B8]')}>
-          {length < MIN ? `mínimo de ${MIN} caracteres · ` : ''}{length}/{MAX}
+          {!review && length < MIN ? `mínimo de ${MIN} caracteres · ` : ''}{length}/{MAX}
         </p>
       </div>
 
@@ -261,7 +308,7 @@ function StepWrite({ propertyId, user, onSent }: { propertyId: string; user: Sug
         disabled={!valid || pending || uploading}
         className="h-12 w-full rounded-2xl bg-[#1A56DB] text-[15px] font-semibold text-white shadow-sm transition active:scale-[0.98] disabled:opacity-50"
       >
-        {pending ? 'Enviando…' : 'Enviar sugestão'}
+        {pending ? 'Enviando…' : review ? 'Enviar avaliação' : 'Enviar sugestão'}
       </button>
     </div>
   )
@@ -277,7 +324,8 @@ const CONFETTI = Array.from({ length: 14 }, (_, i) => ({
   drift: `${((i % 4) - 1.5) * 18}px`,
 }))
 
-function StepThanks({ sent, propertyName, backHref }: { sent: Sent; propertyName: string; backHref: string }) {
+function StepThanks({ sent, propertyName, backHref, mode, channels }: { sent: Sent; propertyName: string; backHref: string; mode: Mode; channels: ReviewChannel[] }) {
+  const review = mode === 'avaliacao'
   const when = new Date(sent.createdAt)
   const date = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Fortaleza' }).format(when)
   const time = new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Fortaleza' }).format(when)
@@ -309,11 +357,26 @@ function StepThanks({ sent, propertyName, backHref }: { sent: Sent; propertyName
 
       <h1 className="text-2xl font-extrabold">Obrigado, {sent.firstName}!</h1>
       <p className="text-[15px] leading-relaxed text-[#334155]">
-        Sua sugestão chegou direitinho ao anfitrião da {propertyName}.
+        Sua {review ? 'avaliação' : 'sugestão'} chegou direitinho ao anfitrião da {propertyName}.
       </p>
-      <p className="text-[15px] leading-relaxed text-[#334155]">
-        É com a opinião de hóspedes como você que cada estadia fica melhor que a anterior. Vamos ler com todo o carinho e, se for preciso, entramos em contato.
-      </p>
+      {review ? (
+        channels.length > 0 && (
+          <div className="space-y-2 text-left">
+            <p className="text-center text-[15px] leading-relaxed text-[#334155]">
+              Se puder, deixe também sua avaliação no site em que você reservou. Ajuda muito o anfitrião:
+            </p>
+            {channels.map((c) => (
+              <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-2xl bg-white px-4 text-[15px] font-semibold ring-1 ring-black/10 active:scale-[0.98]">
+                {c.name} <ArrowSquareOut size={18} color="#64748B" />
+              </a>
+            ))}
+          </div>
+        )
+      ) : (
+        <p className="text-[15px] leading-relaxed text-[#334155]">
+          É com a opinião de hóspedes como você que cada estadia fica melhor que a anterior. Vamos ler com todo o carinho e, se for preciso, entramos em contato.
+        </p>
+      )}
       <p className="text-[15px] italic text-[#475569]">Aproveite o restante da sua estadia!</p>
 
       <a href={backHref} className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#1A56DB] text-[15px] font-semibold text-white active:scale-[0.98]">

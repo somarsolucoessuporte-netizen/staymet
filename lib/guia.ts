@@ -6,6 +6,7 @@ export const PARTNER_GROUPS = [
   { value: 'SERVICOS', label: 'Serviços da casa' },
   { value: 'PASSEIOS', label: 'Passeios e transporte' },
   { value: 'SAUDE',    label: 'Saúde e outros' },
+  { value: 'AVALIACAO', label: 'Avaliações' },
 ] as const
 
 // Paleta (ícone + fundo em gradiente suave)
@@ -26,7 +27,7 @@ const C = {
 } as const
 
 // icon: nome do ícone Phosphor (components/guia/CategoryIcon.tsx)
-// section: contatos → grade principal do guia | dicas → "Dicas & Roteiros"
+// section: contatos → grade principal do guia | dicas → "Dicas & Roteiros" | avaliacao → tela "Avaliar estadia"
 // Valores antigos (ANFITRIAO, MERCADO, RESTAURANTE, DELIVERY, PASSEIO, TRANSPORTE, OUTRO) mantidos.
 export const PARTNER_CATEGORIES = [
   { value: 'MERCADO',     label: 'Mercado',            group: 'COMER',    section: 'contatos', icon: 'ShoppingCart',    ...C.verde },
@@ -51,6 +52,8 @@ export const PARTNER_CATEGORIES = [
   { value: 'FARMACIA',    label: 'Farmácia',           group: 'SAUDE',    section: 'contatos', icon: 'Pill',            ...C.vermelho },
   { value: 'SAUDE',       label: 'Saúde',              group: 'SAUDE',    section: 'contatos', icon: 'FirstAid',        ...C.vermelho },
   { value: 'OUTRO',       label: 'Outro',              group: 'SAUDE',    section: 'contatos', icon: 'DotsThreeCircle', ...C.cinza },
+  // Link da página de avaliação (Airbnb, Booking, Google...): vai para o botão "Avaliar estadia" do guia
+  { value: 'AVALIACAO',   label: 'Avaliação no site',  group: 'AVALIACAO', section: 'avaliacao', icon: 'Star',          ...C.amarelo },
 ] as const
 
 export type PartnerCategory = (typeof PARTNER_CATEGORIES)[number]['value']

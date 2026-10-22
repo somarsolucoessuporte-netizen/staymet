@@ -130,6 +130,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
   const sectionOf = (cat: string) => getCategoryMeta(cat)?.section ?? 'contatos'
   const contatos = items.filter((i) => sectionOf(i.category) === 'contatos')
   const dicas = items.filter((i) => sectionOf(i.category) === 'dicas')
+  const avaliacoes = items.filter((i) => sectionOf(i.category) === 'avaliacao' && i.externalUrl)
   const anfitriao = items.find((i) => i.category === 'ANFITRIAO' && i.whatsappUrl)
 
   const hasWifi = !!(guia.wifiName || guia.wifiPassword)
@@ -194,6 +195,13 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
       icon: <CategoryIcon kind="EMERGENCIA" />, sheetTitle: 'Emergência',
       sheet: { type: 'emergencia', lines: emergencyLines },
     },
+    // Avaliar estadia: links dos sites (configurados pelo anfitrião) + estrelas aqui no app
+    ...(avaliacoes.length > 0 || guia.suggestionsEnabled
+      ? [{
+          id: 'avaliar', title: 'Avaliar estadia', caption: 'Gostou? Conte pra gente', group: 'principal' as const,
+          icon: <CategoryIcon kind="AVALIAR" />, sheetTitle: '', href: `/guia/${id}/avaliar`,
+        }]
+      : []),
     ...(guia.suggestionsEnabled
       ? [{
           id: 'sugestoes', title: 'Caixinha de sugestões', caption: 'Sua opinião importa', group: 'principal' as const,
