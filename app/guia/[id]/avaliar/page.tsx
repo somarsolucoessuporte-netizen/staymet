@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { createClient } from '@/lib/supabase/server'
 import { SuggestionFlow, type SuggestionUser, type ReviewChannel } from '@/components/guia/SuggestionFlow'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
+import { GuiaTrackedLink } from '@/components/guia/GuiaTrackedLink'
 import { SomarFooter } from '@/components/shared/SomarFooter'
 import { isoToDate, todayISO, SOURCE_META } from '@/lib/agenda'
 
@@ -100,30 +101,32 @@ export default async function AvaliarPage({ params }: { params: Promise<{ id: st
                 </div>
               </div>
               {match && (
-                <a
+                <GuiaTrackedLink
+                  propertyId={property.id}
+                  cardKey="avaliar"
+                  partnerId={match.id}
                   href={match.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-[#1A56DB] text-[15px] font-semibold text-white shadow-sm transition active:scale-[0.98]"
                 >
                   {match.name} <ArrowSquareOut size={18} weight="bold" />
-                </a>
+                </GuiaTrackedLink>
               )}
               {match && others.length > 0 && (
                 <p className="pt-1 text-xs font-semibold text-[#64748B]">Reservou por outro site?</p>
               )}
               <div className="space-y-2">
                 {others.map((c) => (
-                  <a
+                  <GuiaTrackedLink
                     key={c.id}
+                    propertyId={property.id}
+                    cardKey="avaliar"
+                    partnerId={c.id}
                     href={c.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="flex h-12 items-center justify-between rounded-2xl bg-white px-4 text-[15px] font-semibold ring-1 ring-black/10 transition active:scale-[0.98]"
                   >
                     {c.name}
                     <ArrowSquareOut size={18} color="#64748B" />
-                  </a>
+                  </GuiaTrackedLink>
                 ))}
               </div>
               <p className="text-[11px] text-[#94A3B8]">

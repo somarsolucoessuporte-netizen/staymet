@@ -17,12 +17,15 @@ export function GuiaCopyButton({
   toast,
   className,
   children,
+  onCopied,
 }: {
   text: string
   label?: string
   toast: string
   className?: string
   children?: React.ReactNode
+  /** chamado após copiar (contador de uso do guia) */
+  onCopied?: () => void
 }) {
   const [msg, setMsg] = useState<string | null>(null)
   const [ok, setOk] = useState(true)
@@ -37,6 +40,7 @@ export function GuiaCopyButton({
     try {
       await navigator.clipboard.writeText(text)
       show(toast)
+      onCopied?.()
     } catch {
       show('Selecione o texto e copie manualmente', false)
     }

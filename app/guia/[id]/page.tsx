@@ -89,7 +89,7 @@ function partnerCard(item: Item, guia: Guia, mapsUrl: string | null): GuiaCardDa
 
   if (section === 'dicas') {
     return {
-      id: item.id, title: item.name, caption: captionFor(item, section), group: 'dicas', icon,
+      id: item.id, partnerId: item.id, title: item.name, caption: captionFor(item, section), group: 'dicas', icon,
       sheetTitle: getCategoryMeta(item.category)?.label ?? 'Dica',
       sheet: {
         type: 'dica', name: item.name, description: item.description,
@@ -101,7 +101,7 @@ function partnerCard(item: Item, guia: Guia, mapsUrl: string | null): GuiaCardDa
   const order = isOrderCategory(item.category)
   const message = buildGuestMessage(item.category, guia.name, item.deliveryNote || guia.deliveryInstructions, mapsUrl)
   return {
-    id: item.id, title: item.name, caption: captionFor(item, section), group: 'principal', icon,
+    id: item.id, partnerId: item.id, title: item.name, caption: captionFor(item, section), group: 'principal', icon,
     sheetTitle: getCategoryMeta(item.category)?.label ?? 'Contato',
     sheet: {
       type: 'contato',
@@ -148,6 +148,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           value: 'WhatsApp',
           href: withWhatsappText(anfitriao.whatsappUrl, buildGuestMessage('ANFITRIAO', guia.name)),
           external: true,
+          partnerId: anfitriao.id,
         }]
       : []),
   ]
@@ -244,7 +245,7 @@ export default async function GuiaPublicoPage({ params }: { params: Promise<{ id
           </p>
         </div>
 
-        <GuiaGrid cards={cards} />
+        <GuiaGrid propertyId={id} cards={cards} />
       </div>
 
       <SomarFooter className="mt-auto pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))]" />

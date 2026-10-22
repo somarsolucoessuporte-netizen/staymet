@@ -9,6 +9,7 @@ import { submitSuggestion, createSuggestionPhotoUploadUrl } from '@/lib/actions/
 import { SUGGESTION_TOPICS, REVIEW_TOPIC } from '@/lib/occurrences'
 import { COVER_MAX_BYTES, COVER_MIME_TYPES } from '@/lib/property-types'
 import { cn, formatFirstName } from '@/lib/utils'
+import { linkAction, trackGuideEvent } from '@/lib/guide-events'
 
 export type SuggestionUser = { fullName: string; email: string; avatarUrl: string | null }
 /** Link de avaliação num site (Airbnb, Booking...) configurado pelo anfitrião */
@@ -43,7 +44,7 @@ export function SuggestionFlow({
       <Stepper step={step} mode={mode} />
       {step === 1 && <StepLogin propertyId={propertyId} mode={mode} />}
       {step === 2 && user && <StepWrite propertyId={propertyId} user={user} onSent={setSent} mode={mode} />}
-      {step === 3 && sent && <StepThanks sent={sent} propertyName={propertyName} backHref={backHref} mode={mode} channels={channels} />}
+      {step === 3 && sent && <StepThanks propertyId={propertyId} sent={sent} propertyName={propertyName} backHref={backHref} mode={mode} channels={channels} />}
     </div>
   )
 }
@@ -324,7 +325,7 @@ const CONFETTI = Array.from({ length: 14 }, (_, i) => ({
   drift: `${((i % 4) - 1.5) * 18}px`,
 }))
 
-function StepThanks({ sent, propertyName, backHref, mode, channels }: { sent: Sent; propertyName: string; backHref: string; mode: Mode; channels: ReviewChannel[] }) {
+function StepThanks({ propertyId, sent, propertyName, backHref, mode, channels }: { propertyId: string; sent: Sent; propertyName: string; backHref: string; mode: Mode; channels: ReviewChannel[] }) {
   const review = mode === 'avaliacao'
   const when = new Date(sent.createdAt)
   const date = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Fortaleza' }).format(when)
@@ -366,7 +367,7 @@ function StepThanks({ sent, propertyName, backHref, mode, channels }: { sent: Se
               Se puder, deixe também sua avaliação no site em que você reservou. Ajuda muito o anfitrião:
             </p>
             {channels.map((c) => (
-              <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" className="flex h-12 items-center justify-between rounded-2xl bg-white px-4 text-[15px] font-semibold ring-1 ring-black/10 active:scale-[0.98]">
+              <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" onClick={() => trackGuideEvent(propertyId, { cardKey: 'avaliar', action: linkAction(c.url), partnerId: c.id })} className="flex h-12 items-center justify-between rounded-2xl bg-white px-4 text-[15px] font-semibold ring-1 ring-black/10 active:scale-[0.98]">
                 {c.name} <ArrowSquareOut size={18} color="#64748B" />
               </a>
             ))}

@@ -16,6 +16,7 @@ import { googleMapsPointUrl, propertyPoint } from '@/lib/geo'
 import { geocodeCity } from '@/lib/geocode'
 import { GuiaSuggestionsToggle } from '@/components/anfitriao/GuiaSuggestionsToggle'
 import { cn } from '@/lib/utils'
+import { ChartLineUp } from '@phosphor-icons/react/ssr'
 
 export default async function AnfitriaoGuiaPage({
   params,
@@ -61,11 +62,19 @@ export default async function AnfitriaoGuiaPage({
 
   return (
     <div className="p-4 pt-6 space-y-5">
-      <div>
-        <h1 className="text-xl font-bold flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-accent" /> Guia do Hóspede
-        </h1>
-        <p className="text-sm text-muted-foreground">O que o hóspede vê ao abrir o link</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-accent" /> Guia do Hóspede
+          </h1>
+          <p className="text-sm text-muted-foreground">O que o hóspede vê ao abrir o link</p>
+        </div>
+        <Link
+          href={`/${locale}/anfitriao/guia/relatorio?propertyId=${selected.id}`}
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#F1F5FF] px-3 text-xs font-semibold text-[#1A56DB] transition active:scale-[0.97]"
+        >
+          <ChartLineUp size={16} weight="duotone" /> Relatório de uso
+        </Link>
       </div>
 
       {/* Seletor de imóvel */}

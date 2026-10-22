@@ -7,6 +7,7 @@ import { ChevronDown, Copy, ExternalLink, MapPin, Phone, Send } from 'lucide-rea
 import { GuiaSheet } from '@/components/guia/GuiaSheet'
 import { GuiaCopyButton } from '@/components/guia/GuiaCopyButton'
 import { CategoryIcon } from '@/components/guia/CategoryIcon'
+import { linkAction, trackGuideEvent, trackGuideOpen, type GuideAction, type GuideCardKey } from '@/lib/guide-events'
 
 // Leaflet só no navegador e só quando a folha "Como chegar" abre
 const LeafletMap = dynamic(() => import('@/components/shared/LeafletMap').then((m) => m.LeafletMap), {
@@ -30,11 +31,13 @@ export type GuiaSheetData =
       externalUrl: string | null
     }
   | { type: 'dica'; name: string; description: string | null; externalUrl: string | null; whatsappUrl: string | null; phone: string | null }
-  | { type: 'emergencia'; lines: { label: string; value: string; href: string; kind: string; external?: boolean }[] }
+  | { type: 'emergencia'; lines: { label: string; value: string; href: string; kind: string; external?: boolean; partnerId?: string }[] }
   | { type: 'localizacao'; lat: number; lng: number; address: string; wazeHref: string; googleHref: string; shareHref: string }
 
 export type GuiaCardData = {
   id: string
+  /** botão de parceiro: entra no relatório do parceiro (contador de uso) */
+  partnerId?: string
   title: string
   caption: string
   group: 'principal' | 'dicas'
@@ -55,10 +58,28 @@ const CARD =
 const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`
 const isMaps = (url: string) => /maps|goo\.gl/i.test(url)
 
-export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
+/** Registra uma ação; partnerId explícito vale para linhas internas (ex.: anfitrião na folha de emergência) */
+type OnAction = (action: GuideAction, partnerId?: string) => void
+
+export function GuiaGrid({ propertyId, cards }: { propertyId: string; cards: GuiaCardData[] }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const close = useCallback(() => setOpenId(null), [])
   const open = cards.find((c) => c.id === openId)
+
+  const track = useCallback(
+    (c: GuiaCardData, action: GuideAction, partnerId?: string) =>
+      trackGuideEvent(propertyId, {
+        cardKey: c.partnerId ? 'partner' : (c.id as GuideCardKey),
+        action,
+        partnerId: partnerId ?? c.partnerId ?? null,
+      }),
+    [propertyId],
+  )
+
+  // Abertura do guia: 1 vez por sessão
+  useEffect(() => {
+    trackGuideOpen(propertyId)
+  }, [propertyId])
 
   // Link compartilhado com #emergencia abre direto a folha de emergência
   useEffect(() => {
@@ -90,12 +111,24 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
         key={c.id}
         href={c.href}
         className={cls}
+        onClick={() => {
+          track(c, 'abrir_card')
+          if (c.external && c.href) track(c, linkAction(c.href))
+        }}
         {...(c.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
       >
         {body}
       </a>
     ) : (
-      <button key={c.id} type="button" onClick={() => setOpenId(c.id)} className={cls}>{body}</button>
+      <button
+        key={c.id}
+        type="button"
+        onClick={() => {
+          track(c, 'abrir_card')
+          setOpenId(c.id)
+        }}
+        className={cls}
+      >{body}</button>
     )
   }
 
@@ -114,7 +147,7 @@ export function GuiaGrid({ cards }: { cards: GuiaCardData[] }) {
       </main>
 
       <GuiaSheet open={!!open} onClose={close} title={open?.sheetTitle ?? ''}>
-        {open?.sheet && <SheetBody card={open} sheet={open.sheet} />}
+        {open?.sheet && <SheetBody card={open} sheet={open.sheet} onAction={(action, partnerId) => track(open, action, partnerId)} />}
       </GuiaSheet>
     </>
   )
@@ -129,24 +162,24 @@ const secondaryBtn =
 const copyBtn =
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-xl bg-[#F1F5FF] px-3 text-xs font-semibold text-[#1A56DB] active:scale-95'
 
-function SheetBody({ card, sheet: s }: { card: GuiaCardData; sheet: GuiaSheetData }) {
+function SheetBody({ card, sheet: s, onAction }: { card: GuiaCardData; sheet: GuiaSheetData; onAction: OnAction }) {
   switch (s.type) {
     case 'wifi':
-      return <WifiSheet network={s.network} password={s.password} />
+      return <WifiSheet network={s.network} password={s.password} onAction={onAction} />
     case 'entregador':
-      return <EntregadorSheet text={s.text} />
+      return <EntregadorSheet text={s.text} onAction={onAction} />
     case 'contato':
-      return <ContatoSheet icon={card.icon} data={s} />
+      return <ContatoSheet icon={card.icon} data={s} onAction={onAction} />
     case 'dica':
-      return <DicaSheet icon={card.icon} data={s} />
+      return <DicaSheet icon={card.icon} data={s} onAction={onAction} />
     case 'emergencia':
-      return <EmergenciaSheet lines={s.lines} />
+      return <EmergenciaSheet lines={s.lines} onAction={onAction} />
     case 'localizacao':
-      return <LocalizacaoSheet data={s} />
+      return <LocalizacaoSheet data={s} onAction={onAction} />
   }
 }
 
-function WifiSheet({ network, password }: { network: string | null; password: string | null }) {
+function WifiSheet({ network, password, onAction }: { network: string | null; password: string | null; onAction: OnAction }) {
   return (
     <div className="space-y-4">
       <div className="divide-y divide-gray-100 rounded-2xl border border-[#E2E8F0]">
@@ -156,7 +189,7 @@ function WifiSheet({ network, password }: { network: string | null; password: st
             <p className="truncate text-base font-bold">{network || '—'}</p>
           </div>
           {network && (
-            <GuiaCopyButton text={network} toast="Nome da rede copiado" className={copyBtn}>
+            <GuiaCopyButton text={network} toast="Nome da rede copiado" className={copyBtn} onCopied={() => onAction('copiar')}>
               <Copy size={14} /> Copiar
             </GuiaCopyButton>
           )}
@@ -167,7 +200,7 @@ function WifiSheet({ network, password }: { network: string | null; password: st
             <p className="break-all font-mono text-xl font-bold tracking-wide">{password || 'Rede aberta'}</p>
           </div>
           {password && (
-            <GuiaCopyButton text={password} toast="Senha copiada" className={copyBtn}>
+            <GuiaCopyButton text={password} toast="Senha copiada" className={copyBtn} onCopied={() => onAction('copiar')}>
               <Copy size={14} /> Copiar
             </GuiaCopyButton>
           )}
@@ -192,7 +225,7 @@ function WifiSheet({ network, password }: { network: string | null; password: st
   )
 }
 
-function EntregadorSheet({ text }: { text: string }) {
+function EntregadorSheet({ text, onAction }: { text: string; onAction: OnAction }) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-[#475569]">
@@ -202,13 +235,14 @@ function EntregadorSheet({ text }: { text: string }) {
         {text}
       </div>
       <div className="flex gap-2">
-        <GuiaCopyButton text={text} toast="Texto copiado" className={secondaryBtn}>
+        <GuiaCopyButton text={text} toast="Texto copiado" className={secondaryBtn} onCopied={() => onAction('copiar')}>
           <Copy size={16} /> Copiar texto
         </GuiaCopyButton>
         <a
           href={`https://wa.me/?text=${encodeURIComponent(text)}`}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => onAction('whatsapp')}
           className={`${secondaryBtn} bg-[#25D366] text-white`}
         >
           <Send size={16} /> Enviar no WhatsApp
@@ -230,7 +264,7 @@ function SheetHeader({ icon, name, description }: { icon: React.ReactNode; name:
   )
 }
 
-function ContatoSheet({ icon, data }: { icon: React.ReactNode; data: Extract<GuiaSheetData, { type: 'contato' }> }) {
+function ContatoSheet({ icon, data, onAction }: { icon: React.ReactNode; data: Extract<GuiaSheetData, { type: 'contato' }>; onAction: OnAction }) {
   const [showMsg, setShowMsg] = useState(false)
   return (
     <div className="space-y-4">
@@ -256,7 +290,7 @@ function ContatoSheet({ icon, data }: { icon: React.ReactNode; data: Extract<Gui
       )}
 
       {data.whatsappHref && (
-        <a href={data.whatsappHref} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#25D366]`}>
+        <a href={data.whatsappHref} target="_blank" rel="noopener noreferrer" onClick={() => onAction('whatsapp')} className={`${primaryBtn} bg-[#25D366]`}>
           <WhatsAppGlyph /> {data.primaryLabel}
         </a>
       )}
@@ -264,12 +298,12 @@ function ContatoSheet({ icon, data }: { icon: React.ReactNode; data: Extract<Gui
       {(data.phone || data.externalUrl) && (
         <div className="flex gap-2">
           {data.phone && (
-            <a href={telHref(data.phone)} className={secondaryBtn}>
+            <a href={telHref(data.phone)} onClick={() => onAction('ligar')} className={secondaryBtn}>
               <Phone size={16} /> Ligar
             </a>
           )}
           {data.externalUrl && (
-            <a href={data.externalUrl} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
+            <a href={data.externalUrl} target="_blank" rel="noopener noreferrer" onClick={() => onAction(linkAction(data.externalUrl!))} className={secondaryBtn}>
               <MapPin size={16} /> {isMaps(data.externalUrl) ? 'Ver no mapa' : 'Abrir site'}
             </a>
           )}
@@ -279,12 +313,12 @@ function ContatoSheet({ icon, data }: { icon: React.ReactNode; data: Extract<Gui
   )
 }
 
-function DicaSheet({ icon, data }: { icon: React.ReactNode; data: Extract<GuiaSheetData, { type: 'dica' }> }) {
+function DicaSheet({ icon, data, onAction }: { icon: React.ReactNode; data: Extract<GuiaSheetData, { type: 'dica' }>; onAction: OnAction }) {
   return (
     <div className="space-y-4">
       <SheetHeader icon={icon} name={data.name} description={data.description} />
       {data.externalUrl && (
-        <a href={data.externalUrl} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#1A56DB]`}>
+        <a href={data.externalUrl} target="_blank" rel="noopener noreferrer" onClick={() => onAction(linkAction(data.externalUrl!))} className={`${primaryBtn} bg-[#1A56DB]`}>
           {isMaps(data.externalUrl) ? <MapPin size={18} /> : <ExternalLink size={18} />}
           {isMaps(data.externalUrl) ? 'Abrir rota no Maps' : 'Abrir site'}
         </a>
@@ -292,12 +326,12 @@ function DicaSheet({ icon, data }: { icon: React.ReactNode; data: Extract<GuiaSh
       {(data.whatsappUrl || data.phone) && (
         <div className="flex gap-2">
           {data.whatsappUrl && (
-            <a href={data.whatsappUrl} target="_blank" rel="noopener noreferrer" className={secondaryBtn}>
+            <a href={data.whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => onAction('whatsapp')} className={secondaryBtn}>
               <WhatsAppGlyph /> WhatsApp
             </a>
           )}
           {data.phone && (
-            <a href={telHref(data.phone)} className={secondaryBtn}>
+            <a href={telHref(data.phone)} onClick={() => onAction('ligar')} className={secondaryBtn}>
               <Phone size={16} /> Ligar
             </a>
           )}
@@ -307,7 +341,7 @@ function DicaSheet({ icon, data }: { icon: React.ReactNode; data: Extract<GuiaSh
   )
 }
 
-function EmergenciaSheet({ lines }: { lines: Extract<GuiaSheetData, { type: 'emergencia' }>['lines'] }) {
+function EmergenciaSheet({ lines, onAction }: { lines: Extract<GuiaSheetData, { type: 'emergencia' }>['lines']; onAction: OnAction }) {
   return (
     <div className="divide-y divide-gray-100">
       {lines.map((l) => (
@@ -321,6 +355,7 @@ function EmergenciaSheet({ lines }: { lines: Extract<GuiaSheetData, { type: 'eme
             href={l.href}
             target={l.external ? '_blank' : undefined}
             rel={l.external ? 'noopener noreferrer' : undefined}
+            onClick={() => onAction(l.external ? 'whatsapp' : 'ligar', l.partnerId)}
             className={`inline-flex h-11 items-center gap-1.5 rounded-2xl px-4 text-sm font-semibold text-white active:scale-95 ${
               l.external ? 'bg-[#25D366]' : 'bg-[#DC2626]'
             }`}
@@ -334,20 +369,20 @@ function EmergenciaSheet({ lines }: { lines: Extract<GuiaSheetData, { type: 'eme
   )
 }
 
-function LocalizacaoSheet({ data }: { data: Extract<GuiaSheetData, { type: 'localizacao' }> }) {
+function LocalizacaoSheet({ data, onAction }: { data: Extract<GuiaSheetData, { type: 'localizacao' }>; onAction: OnAction }) {
   const point = { lat: data.lat, lng: data.lng }
   return (
     <div className="space-y-4">
       <LeafletMap center={point} marker={point} zoom={16} interactive={false} className="h-[160px] rounded-2xl ring-1 ring-[#E2E8F0]" />
       {data.address && <p className="text-sm leading-snug text-[#334155]">{data.address}</p>}
       <div className="space-y-2">
-        <a href={data.wazeHref} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#1A56DB]`}>
+        <a href={data.wazeHref} target="_blank" rel="noopener noreferrer" onClick={() => onAction('waze')} className={`${primaryBtn} bg-[#1A56DB]`}>
           <NavigationArrow size={18} weight="fill" /> Abrir no Waze
         </a>
-        <a href={data.googleHref} target="_blank" rel="noopener noreferrer" className={`${primaryBtn} bg-[#0F172A]`}>
+        <a href={data.googleHref} target="_blank" rel="noopener noreferrer" onClick={() => onAction('google_maps')} className={`${primaryBtn} bg-[#0F172A]`}>
           <NavigationArrow size={18} weight="fill" /> Abrir no Google Maps
         </a>
-        <GuiaCopyButton text={data.shareHref} toast="Localização copiada" className={`${secondaryBtn} w-full`}>
+        <GuiaCopyButton text={data.shareHref} toast="Localização copiada" className={`${secondaryBtn} w-full`} onCopied={() => onAction('copiar')}>
           <CopyIcon size={16} weight="bold" /> Copiar localização
         </GuiaCopyButton>
       </div>

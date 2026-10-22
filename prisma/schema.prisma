@@ -164,6 +164,7 @@ model Property {
   statements   OwnerStatement[]
   bookings     Booking[]
   channels     CalendarChannel[]
+  guideEvents  GuideEvent[]
 }
 
 model PropertyUser {
@@ -356,7 +357,8 @@ model Partner {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
 
-  properties PropertyPartner[]
+  properties  PropertyPartner[]
+  guideEvents GuideEvent[]
 }
 
 model PropertyPartner {
@@ -486,4 +488,23 @@ model Booking {
 
   @@unique([channelId, externalUid])
   @@index([propertyId, startDate])
+}
+
+// ─── Uso do Guia do Hóspede ───
+
+/// Clique no guia público (sem dado pessoal). cardKey: wifi, localizacao, emergencia, entregador, avaliar, sugestoes, guia ou partner
+model GuideEvent {
+  id            String   @id @default(cuid())
+  cardKey       String
+  action        String   // abrir_guia | abrir_card | whatsapp | ligar | link | waze | google_maps | copiar
+  bookingSource String?  // origem da reserva em andamento no dia (Agenda)
+  createdAt     DateTime @default(now())
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  partnerId  String?
+  partner    Partner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId, createdAt])
+  @@index([partnerId, createdAt])
 }
